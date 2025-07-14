@@ -8,25 +8,23 @@ interface VideoData {
   [slotId: string]: string;
 }
 
+interface VideoGridProps {
+  videos: VideoData;
+  onVideoUpload: (slotId: string, file: File) => void;
+}
+
 const GRID_SIZE = 1000; // 1000x1000 = 1,000,000 slots
 const SLOT_SIZE = 10; // 10x10 pixels per slot
 
-const VideoGrid: React.FC = () => {
-  const [videos, setVideos] = useState<VideoData>({});
+const VideoGrid: React.FC<VideoGridProps> = ({ videos, onVideoUpload }) => {
   const [zoom, setZoom] = useState(1);
   const { isAdmin } = useAdminMode();
 
   const handleVideoUpload = useCallback((slotId: string, file: File) => {
     if (!isAdmin) return; // Only allow uploads if admin
-    
-    // Create object URL for the uploaded video
-    const videoUrl = URL.createObjectURL(file);
-    setVideos(prev => ({
-      ...prev,
-      [slotId]: videoUrl
-    }));
+    onVideoUpload(slotId, file);
     console.log(`Video uploaded to slot ${slotId}`);
-  }, [isAdmin]);
+  }, [isAdmin, onVideoUpload]);
 
   const Cell = useCallback(({ columnIndex, rowIndex, style }: any) => {
     const slotId = `${rowIndex}-${columnIndex}`;

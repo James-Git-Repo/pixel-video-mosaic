@@ -1,13 +1,40 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import VideoGrid from './VideoGrid';
 import AdminLogin from './AdminLogin';
-import { Film, Layers, Zap, Settings, LogOut } from 'lucide-react';
+import SlotSelector from './SlotSelector';
+import AdminUploadPopup from './AdminUploadPopup';
+import { Film, Layers, Zap, Settings, LogOut, Eye, Upload } from 'lucide-react';
 import { useAdminMode } from '../hooks/useAdminMode';
 
 const VideoGridInterface: React.FC = () => {
   const { isAdmin, toggleAdminMode } = useAdminMode();
-  const [showAdminLogin, setShowAdminLogin] = React.useState(false);
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [showSlotSelector, setShowSlotSelector] = useState(false);
+  const [showUploadPopup, setShowUploadPopup] = useState(false);
+  const [videos, setVideos] = useState<{ [slotId: string]: string }>({});
+  const [hasVisited, setHasVisited] = useState(false);
+
+  // Check if user has visited before and show upload popup for admins
+  useEffect(() => {
+    const hasVisitedBefore = localStorage.getItem('hasVisited') === 'true';
+    setHasVisited(hasVisitedBefore);
+    
+    if (isAdmin && !hasVisitedBefore) {
+      setShowUploadPopup(true);
+    }
+    
+    if (!hasVisitedBefore) {
+      localStorage.setItem('hasVisited', 'true');
+    }
+  }, [isAdmin]);
+
+  // Show upload popup every time admin accesses the site
+  useEffect(() => {
+    if (isAdmin) {
+      setShowUploadPopup(true);
+    }
+  }, [isAdmin]);
 
   const handleAdminAccess = () => {
     if (isAdmin) {
@@ -20,6 +47,15 @@ const VideoGridInterface: React.FC = () => {
   const handleLogin = () => {
     toggleAdminMode();
     setShowAdminLogin(false);
+  };
+
+  const handleVideoUpload = (slotId: string, file: File) => {
+    const videoUrl = URL.createObjectURL(file);
+    setVideos(prev => ({
+      ...prev,
+      [slotId]: videoUrl
+    }));
+    console.log(`Video uploaded to slot ${slotId}`);
   };
 
   return (
@@ -61,6 +97,14 @@ const VideoGridInterface: React.FC = () => {
               </div>
               
               <button
+                onClick={() => setShowUploadPopup(true)}
+                className="flex items-center gap-2 px-3 py-2 sparkle-bg text-background rounded-lg hover:opacity-90 transition-opacity"
+              >
+                <Upload className="w-4 h-4" />
+                Upload Video
+              </button>
+              
+              <button
                 onClick={handleAdminAccess}
                 className="flex items-center gap-2 px-3 py-2 bg-destructive hover:bg-destructive/80 text-destructive-foreground rounded-lg transition-colors"
               >
@@ -81,9 +125,16 @@ const VideoGridInterface: React.FC = () => {
         </div>
       )}
 
-      {/* Admin Access Button for non-admin users */}
+      {/* Controls for non-admin users */}
       {!isAdmin && (
-        <div className="absolute top-4 right-4 z-20">
+        <div className="absolute top-4 right-4 z-20 flex gap-2">
+          <button
+            onClick={() => setShowSlotSelector(true)}
+            className="flex items-center gap-2 px-3 py-2 bg-card hover:bg-muted border border-border rounded-lg transition-colors"
+          >
+            <Eye className="w-4 h-4" />
+            View Slot
+          </button>
           <button
             onClick={handleAdminAccess}
             className="flex items-center gap-2 px-3 py-2 bg-card hover:bg-muted border border-border rounded-lg transition-colors"
@@ -96,12 +147,29 @@ const VideoGridInterface: React.FC = () => {
 
       {/* Main Grid */}
       <main className="flex-1 relative">
-        <VideoGrid />
+        <VideoGrid 
+          videos={videos}
+          onVideoUpload={handleVideoUpload}
+        />
       </main>
 
-      {/* Admin Login Modal */}
+      {/* Modals */}
       {showAdminLogin && (
         <AdminLogin onLogin={handleLogin} />
+      )}
+
+      {showSlotSelector && (
+        <SlotSelector 
+          videos={videos}
+          onClose={() => setShowSlotSelector(false)}
+        />
+      )}
+
+      {showUploadPopup && isAdmin && (
+        <AdminUploadPopup
+          onClose={() => setShowUploadPopup(false)}
+          onVideoUpload={handleVideoUpload}
+        />
       )}
     </div>
   );

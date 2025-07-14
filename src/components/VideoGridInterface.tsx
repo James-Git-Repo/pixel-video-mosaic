@@ -4,6 +4,8 @@ import VideoGrid from './VideoGrid';
 import AdminLogin from './AdminLogin';
 import SlotSelector from './SlotSelector';
 import AdminUploadPopup from './AdminUploadPopup';
+import VideoViewer from './VideoViewer';
+import WelcomeVideoModal from './WelcomeVideoModal';
 import { Film, Layers, Zap, Settings, LogOut, Eye, Upload } from 'lucide-react';
 import { useAdminMode } from '../hooks/useAdminMode';
 
@@ -12,29 +14,20 @@ const VideoGridInterface: React.FC = () => {
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [showSlotSelector, setShowSlotSelector] = useState(false);
   const [showUploadPopup, setShowUploadPopup] = useState(false);
+  const [showWelcomeVideo, setShowWelcomeVideo] = useState(false);
+  const [showVideoViewer, setShowVideoViewer] = useState(false);
+  const [currentViewedVideo, setCurrentViewedVideo] = useState<{slotId: string, video: string} | null>(null);
   const [videos, setVideos] = useState<{ [slotId: string]: string }>({});
-  const [hasVisited, setHasVisited] = useState(false);
+  const [welcomeVideo, setWelcomeVideo] = useState<string | null>(null);
 
-  // Check if user has visited before and show upload popup for admins
+  // Show welcome video on first visit
   useEffect(() => {
-    const hasVisitedBefore = localStorage.getItem('hasVisited') === 'true';
-    setHasVisited(hasVisitedBefore);
-    
-    if (isAdmin && !hasVisitedBefore) {
-      setShowUploadPopup(true);
+    const hasSeenWelcome = localStorage.getItem('hasSeenWelcome') === 'true';
+    if (!hasSeenWelcome) {
+      setShowWelcomeVideo(true);
+      localStorage.setItem('hasSeenWelcome', 'true');
     }
-    
-    if (!hasVisitedBefore) {
-      localStorage.setItem('hasVisited', 'true');
-    }
-  }, [isAdmin]);
-
-  // Show upload popup every time admin accesses the site
-  useEffect(() => {
-    if (isAdmin) {
-      setShowUploadPopup(true);
-    }
-  }, [isAdmin]);
+  }, []);
 
   const handleAdminAccess = () => {
     if (isAdmin) {
@@ -58,6 +51,21 @@ const VideoGridInterface: React.FC = () => {
     console.log(`Video uploaded to slot ${slotId}`);
   };
 
+  const handleWelcomeVideoUpload = (file: File) => {
+    const videoUrl = URL.createObjectURL(file);
+    setWelcomeVideo(videoUrl);
+  };
+
+  const handleVideoView = (slotId: string, video: string) => {
+    setCurrentViewedVideo({ slotId, video });
+    setShowVideoViewer(true);
+  };
+
+  const handleCloseVideoViewer = () => {
+    setShowVideoViewer(false);
+    setCurrentViewedVideo(null);
+  };
+
   return (
     <div className="w-full h-screen bg-background text-foreground flex flex-col">
       {/* Main Title */}
@@ -66,7 +74,7 @@ const VideoGridInterface: React.FC = () => {
           The Million Slots AI Billboard
         </h1>
         <p className="text-center text-muted-foreground mt-2">
-          1,000,000 video slots • Interactive digital canvas
+          1,000,000 video slots • Interactive digital canvas • Click any video to view
         </p>
       </div>
 
@@ -116,14 +124,15 @@ const VideoGridInterface: React.FC = () => {
         </header>
       )}
 
-      {/* Admin Instructions - Only show if admin */}
-      {isAdmin && (
-        <div className="bg-muted px-6 py-3 border-b border-border">
-          <p className="text-sm text-muted-foreground">
-            Click any slot to upload a video (max 15 seconds). Use zoom controls to navigate the massive grid. Each slot is exactly 10x10 pixels.
-          </p>
-        </div>
-      )}
+      {/* Instructions */}
+      <div className="bg-muted px-6 py-3 border-b border-border">
+        <p className="text-sm text-muted-foreground text-center">
+          {isAdmin 
+            ? "Click any slot to upload a video (max 15 seconds). Use zoom controls to navigate the massive grid."
+            : "Click any video slot to view it, or use the search function to find specific coordinates."
+          }
+        </p>
+      </div>
 
       {/* Controls for non-admin users */}
       {!isAdmin && (
@@ -133,7 +142,7 @@ const VideoGridInterface: React.FC = () => {
             className="flex items-center gap-2 px-3 py-2 bg-card hover:bg-muted border border-border rounded-lg transition-colors"
           >
             <Eye className="w-4 h-4" />
-            View Slot
+            Search Slot
           </button>
           <button
             onClick={handleAdminAccess}
@@ -150,6 +159,7 @@ const VideoGridInterface: React.FC = () => {
         <VideoGrid 
           videos={videos}
           onVideoUpload={handleVideoUpload}
+          onVideoView={handleVideoView}
         />
       </main>
 
@@ -169,6 +179,23 @@ const VideoGridInterface: React.FC = () => {
         <AdminUploadPopup
           onClose={() => setShowUploadPopup(false)}
           onVideoUpload={handleVideoUpload}
+        />
+      )}
+
+      {showWelcomeVideo && (
+        <WelcomeVideoModal
+          onClose={() => setShowWelcomeVideo(false)}
+          welcomeVideo={welcomeVideo}
+          isAdmin={isAdmin}
+          onVideoUpload={handleWelcomeVideoUpload}
+        />
+      )}
+
+      {showVideoViewer && currentViewedVideo && (
+        <VideoViewer
+          slotId={currentViewedVideo.slotId}
+          video={currentViewedVideo.video}
+          onClose={handleCloseVideoViewer}
         />
       )}
     </div>

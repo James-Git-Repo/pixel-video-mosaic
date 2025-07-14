@@ -5,16 +5,21 @@ import { Upload } from 'lucide-react';
 interface VideoSlotProps {
   slotId: string;
   onVideoUpload: (slotId: string, file: File) => void;
+  onVideoView: (slotId: string, video: string) => void;
   video?: string;
   isAdmin: boolean;
 }
 
-const VideoSlot: React.FC<VideoSlotProps> = ({ slotId, onVideoUpload, video, isAdmin }) => {
+const VideoSlot: React.FC<VideoSlotProps> = ({ slotId, onVideoUpload, onVideoView, video, isAdmin }) => {
   const [isHovered, setIsHovered] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleClick = () => {
-    if (isAdmin && !video) {
+    if (video && !isAdmin) {
+      // Viewers can click to view the video
+      onVideoView(slotId, video);
+    } else if (isAdmin && !video) {
+      // Admins can click to upload
       fileInputRef.current?.click();
     }
   };
@@ -22,7 +27,6 @@ const VideoSlot: React.FC<VideoSlotProps> = ({ slotId, onVideoUpload, video, isA
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && file.type.startsWith('video/') && isAdmin) {
-      // Check if video is max 15 seconds (this would need server-side validation in production)
       onVideoUpload(slotId, file);
     }
   };
@@ -31,12 +35,12 @@ const VideoSlot: React.FC<VideoSlotProps> = ({ slotId, onVideoUpload, video, isA
     <div
       className={`relative w-[10px] h-[10px] border transition-all duration-200 ${
         video 
-          ? 'border-accent/30' 
+          ? 'border-accent/30 cursor-pointer hover:border-accent' 
           : isAdmin 
             ? 'border-border cursor-pointer hover:border-primary hover:shadow-sm' 
             : 'border-border/20'
       }`}
-      onMouseEnter={() => isAdmin && setIsHovered(true)}
+      onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleClick}
     >

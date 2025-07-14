@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useMemo } from 'react';
 import { FixedSizeGrid as Grid } from 'react-window';
 import VideoSlot from './VideoSlot';
@@ -11,12 +10,13 @@ interface VideoData {
 interface VideoGridProps {
   videos: VideoData;
   onVideoUpload: (slotId: string, file: File) => void;
+  onVideoView: (slotId: string, video: string) => void;
 }
 
 const GRID_SIZE = 1000; // 1000x1000 = 1,000,000 slots
 const SLOT_SIZE = 10; // 10x10 pixels per slot
 
-const VideoGrid: React.FC<VideoGridProps> = ({ videos, onVideoUpload }) => {
+const VideoGrid: React.FC<VideoGridProps> = ({ videos, onVideoUpload, onVideoView }) => {
   const [zoom, setZoom] = useState(1);
   const { isAdmin } = useAdminMode();
 
@@ -26,6 +26,10 @@ const VideoGrid: React.FC<VideoGridProps> = ({ videos, onVideoUpload }) => {
     console.log(`Video uploaded to slot ${slotId}`);
   }, [isAdmin, onVideoUpload]);
 
+  const handleVideoView = useCallback((slotId: string, video: string) => {
+    onVideoView(slotId, video);
+  }, [onVideoView]);
+
   const Cell = useCallback(({ columnIndex, rowIndex, style }: any) => {
     const slotId = `${rowIndex}-${columnIndex}`;
     
@@ -34,12 +38,13 @@ const VideoGrid: React.FC<VideoGridProps> = ({ videos, onVideoUpload }) => {
         <VideoSlot
           slotId={slotId}
           onVideoUpload={handleVideoUpload}
+          onVideoView={handleVideoView}
           video={videos[slotId]}
           isAdmin={isAdmin}
         />
       </div>
     );
-  }, [videos, handleVideoUpload, isAdmin]);
+  }, [videos, handleVideoUpload, handleVideoView, isAdmin]);
 
   const gridWidth = GRID_SIZE * SLOT_SIZE * zoom;
   const gridHeight = GRID_SIZE * SLOT_SIZE * zoom;

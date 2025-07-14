@@ -6,8 +6,7 @@ import SlotSelector from './SlotSelector';
 import AdminUploadPopup from './AdminUploadPopup';
 import VideoViewer from './VideoViewer';
 import WelcomeVideoModal from './WelcomeVideoModal';
-import VideoMerger from './VideoMerger';
-import { Film, Layers, Zap, Settings, LogOut, Eye, Upload, Merge } from 'lucide-react';
+import { Film, Layers, Zap, Settings, LogOut, Eye, Upload } from 'lucide-react';
 import { useAdminMode } from '../hooks/useAdminMode';
 
 const VideoGridInterface: React.FC = () => {
@@ -17,7 +16,6 @@ const VideoGridInterface: React.FC = () => {
   const [showUploadPopup, setShowUploadPopup] = useState(false);
   const [showWelcomeVideo, setShowWelcomeVideo] = useState(true); // Always show welcome video
   const [showVideoViewer, setShowVideoViewer] = useState(false);
-  const [showVideoMerger, setShowVideoMerger] = useState(false);
   const [currentViewedVideo, setCurrentViewedVideo] = useState<{slotId: string, video: string} | null>(null);
   const [videos, setVideos] = useState<{ [slotId: string]: string }>({});
   const [welcomeVideo, setWelcomeVideo] = useState<string | null>(null);
@@ -59,17 +57,6 @@ const VideoGridInterface: React.FC = () => {
     setCurrentViewedVideo(null);
   };
 
-  const handleVideoMerge = (mergedVideo: string, slotIds: string[]) => {
-    // Remove individual videos and add merged video to first slot
-    const newVideos = { ...videos };
-    slotIds.forEach(slotId => {
-      delete newVideos[slotId];
-    });
-    newVideos[slotIds[0]] = mergedVideo;
-    setVideos(newVideos);
-    setShowVideoMerger(false);
-  };
-
   return (
     <div className="w-full h-screen bg-background text-foreground flex flex-col">
       {/* Main Title */}
@@ -104,7 +91,7 @@ const VideoGridInterface: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <Zap className="w-4 h-4 text-secondary" />
-                  <span>15s-2.5min Length</span>
+                  <span>Multi-Slot Upload</span>
                 </div>
               </div>
               
@@ -114,14 +101,6 @@ const VideoGridInterface: React.FC = () => {
               >
                 <Upload className="w-4 h-4" />
                 Upload Video
-              </button>
-
-              <button
-                onClick={() => setShowVideoMerger(true)}
-                className="flex items-center gap-2 px-3 py-2 bg-accent hover:bg-accent/80 text-accent-foreground rounded-lg transition-colors"
-              >
-                <Merge className="w-4 h-4" />
-                Merge Videos
               </button>
               
               <button
@@ -140,7 +119,7 @@ const VideoGridInterface: React.FC = () => {
       <div className="bg-muted px-6 py-3 border-b border-border">
         <p className="text-sm text-muted-foreground text-center">
           {isAdmin 
-            ? "Click any slot to upload a video. Use merge feature to combine videos into larger compositions. Max 2.5 minutes."
+            ? "Upload videos to single or multiple slots simultaneously. Duration auto-adjusts: 15s base + 5s per additional slot (max 2.5 minutes)."
             : "Click any video slot to view it, or use the search function to find specific coordinates."
           }
         </p>
@@ -208,14 +187,6 @@ const VideoGridInterface: React.FC = () => {
           slotId={currentViewedVideo.slotId}
           video={currentViewedVideo.video}
           onClose={handleCloseVideoViewer}
-        />
-      )}
-
-      {showVideoMerger && isAdmin && (
-        <VideoMerger
-          videos={videos}
-          onClose={() => setShowVideoMerger(false)}
-          onMerge={handleVideoMerge}
         />
       )}
     </div>

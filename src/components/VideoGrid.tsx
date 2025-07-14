@@ -2,6 +2,7 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { FixedSizeGrid as Grid } from 'react-window';
 import VideoSlot from './VideoSlot';
+import { useAdminMode } from '../hooks/useAdminMode';
 
 interface VideoData {
   [slotId: string]: string;
@@ -13,8 +14,11 @@ const SLOT_SIZE = 10; // 10x10 pixels per slot
 const VideoGrid: React.FC = () => {
   const [videos, setVideos] = useState<VideoData>({});
   const [zoom, setZoom] = useState(1);
+  const { isAdmin } = useAdminMode();
 
   const handleVideoUpload = useCallback((slotId: string, file: File) => {
+    if (!isAdmin) return; // Only allow uploads if admin
+    
     // Create object URL for the uploaded video
     const videoUrl = URL.createObjectURL(file);
     setVideos(prev => ({
@@ -22,7 +26,7 @@ const VideoGrid: React.FC = () => {
       [slotId]: videoUrl
     }));
     console.log(`Video uploaded to slot ${slotId}`);
-  }, []);
+  }, [isAdmin]);
 
   const Cell = useCallback(({ columnIndex, rowIndex, style }: any) => {
     const slotId = `${rowIndex}-${columnIndex}`;
@@ -33,41 +37,46 @@ const VideoGrid: React.FC = () => {
           slotId={slotId}
           onVideoUpload={handleVideoUpload}
           video={videos[slotId]}
+          isAdmin={isAdmin}
         />
       </div>
     );
-  }, [videos, handleVideoUpload]);
+  }, [videos, handleVideoUpload, isAdmin]);
 
   const gridWidth = GRID_SIZE * SLOT_SIZE * zoom;
   const gridHeight = GRID_SIZE * SLOT_SIZE * zoom;
 
   return (
-    <div className="relative w-full h-full overflow-hidden bg-black">
-      {/* Zoom Controls */}
-      <div className="absolute top-4 left-4 z-10 flex flex-col gap-2 bg-gray-900/80 backdrop-blur-sm rounded-lg p-3">
-        <button
-          onClick={() => setZoom(prev => Math.min(prev * 1.5, 10))}
-          className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm transition-colors"
-        >
-          Zoom In
-        </button>
-        <button
-          onClick={() => setZoom(prev => Math.max(prev / 1.5, 0.1))}
-          className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm transition-colors"
-        >
-          Zoom Out
-        </button>
-        <div className="text-white text-xs text-center">
-          {Math.round(zoom * 100)}%
+    <div className="relative w-full h-full overflow-hidden bg-background">
+      {/* Zoom Controls - Only show if admin */}
+      {isAdmin && (
+        <div className="absolute top-4 left-4 z-10 flex flex-col gap-2 bg-card/80 backdrop-blur-sm rounded-lg p-3 border border-border">
+          <button
+            onClick={() => setZoom(prev => Math.min(prev * 1.5, 10))}
+            className="px-3 py-1 sparkle-bg text-background rounded text-sm transition-opacity hover:opacity-90"
+          >
+            Zoom In
+          </button>
+          <button
+            onClick={() => setZoom(prev => Math.max(prev / 1.5, 0.1))}
+            className="px-3 py-1 sparkle-bg text-background rounded text-sm transition-opacity hover:opacity-90"
+          >
+            Zoom Out
+          </button>
+          <div className="text-foreground text-xs text-center">
+            {Math.round(zoom * 100)}%
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Stats */}
-      <div className="absolute top-4 right-4 z-10 bg-gray-900/80 backdrop-blur-sm rounded-lg p-3 text-white text-sm">
-        <div>Total Slots: 1,000,000</div>
-        <div>Videos Uploaded: {Object.keys(videos).length}</div>
-        <div>Available: {1000000 - Object.keys(videos).length}</div>
-      </div>
+      {/* Stats - Only show if admin */}
+      {isAdmin && (
+        <div className="absolute top-4 right-4 z-10 bg-card/80 backdrop-blur-sm rounded-lg p-3 text-foreground text-sm border border-border">
+          <div>Total Slots: 1,000,000</div>
+          <div className="sparkle-text font-medium">Videos Uploaded: {Object.keys(videos).length}</div>
+          <div>Available: {1000000 - Object.keys(videos).length}</div>
+        </div>
+      )}
 
       {/* Grid Container */}
       <div 

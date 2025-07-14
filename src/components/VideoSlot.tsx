@@ -6,19 +6,22 @@ interface VideoSlotProps {
   slotId: string;
   onVideoUpload: (slotId: string, file: File) => void;
   video?: string;
+  isAdmin: boolean;
 }
 
-const VideoSlot: React.FC<VideoSlotProps> = ({ slotId, onVideoUpload, video }) => {
+const VideoSlot: React.FC<VideoSlotProps> = ({ slotId, onVideoUpload, video, isAdmin }) => {
   const [isHovered, setIsHovered] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleClick = () => {
-    fileInputRef.current?.click();
+    if (isAdmin && !video) {
+      fileInputRef.current?.click();
+    }
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file && file.type.startsWith('video/')) {
+    if (file && file.type.startsWith('video/') && isAdmin) {
       // Check if video is max 15 seconds (this would need server-side validation in production)
       onVideoUpload(slotId, file);
     }
@@ -26,8 +29,14 @@ const VideoSlot: React.FC<VideoSlotProps> = ({ slotId, onVideoUpload, video }) =
 
   return (
     <div
-      className="relative w-[10px] h-[10px] border border-gray-800 cursor-pointer transition-all duration-200 hover:border-blue-500 hover:shadow-sm"
-      onMouseEnter={() => setIsHovered(true)}
+      className={`relative w-[10px] h-[10px] border transition-all duration-200 ${
+        video 
+          ? 'border-accent/30' 
+          : isAdmin 
+            ? 'border-border cursor-pointer hover:border-primary hover:shadow-sm' 
+            : 'border-border/20'
+      }`}
+      onMouseEnter={() => isAdmin && setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleClick}
     >
@@ -41,20 +50,24 @@ const VideoSlot: React.FC<VideoSlotProps> = ({ slotId, onVideoUpload, video }) =
           playsInline
         />
       ) : (
-        <div className={`w-full h-full bg-gray-900 flex items-center justify-center ${isHovered ? 'bg-gray-800' : ''}`}>
-          {isHovered && (
-            <Upload className="w-1 h-1 text-blue-400" style={{ fontSize: '2px' }} />
+        <div className={`w-full h-full bg-muted flex items-center justify-center ${
+          isAdmin && isHovered ? 'bg-muted/70' : ''
+        }`}>
+          {isAdmin && isHovered && (
+            <Upload className="w-1 h-1 text-primary" style={{ fontSize: '2px' }} />
           )}
         </div>
       )}
       
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="video/*"
-        onChange={handleFileChange}
-        className="hidden"
-      />
+      {isAdmin && (
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="video/*"
+          onChange={handleFileChange}
+          className="hidden"
+        />
+      )}
     </div>
   );
 };

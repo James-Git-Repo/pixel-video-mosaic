@@ -1,6 +1,6 @@
 
 import React, { useState, useRef } from 'react';
-import { Upload } from 'lucide-react';
+import { Upload, Lock } from 'lucide-react';
 
 interface VideoSlotProps {
   slotId: string;
@@ -8,9 +8,17 @@ interface VideoSlotProps {
   onVideoView: (slotId: string, video: string) => void;
   video?: string;
   isAdmin: boolean;
+  isOccupied: boolean;
 }
 
-const VideoSlot: React.FC<VideoSlotProps> = ({ slotId, onVideoUpload, onVideoView, video, isAdmin }) => {
+const VideoSlot: React.FC<VideoSlotProps> = ({ 
+  slotId, 
+  onVideoUpload, 
+  onVideoView, 
+  video, 
+  isAdmin, 
+  isOccupied 
+}) => {
   const [isHovered, setIsHovered] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -31,15 +39,21 @@ const VideoSlot: React.FC<VideoSlotProps> = ({ slotId, onVideoUpload, onVideoVie
     }
   };
 
+  const getBorderStyle = () => {
+    if (video) {
+      return 'border-accent/30 cursor-pointer hover:border-accent';
+    } else if (isOccupied && !isAdmin) {
+      return 'border-orange-400/50 bg-orange-100/20';
+    } else if (isAdmin) {
+      return 'border-border cursor-pointer hover:border-primary hover:shadow-sm';
+    } else {
+      return 'border-border/20';
+    }
+  };
+
   return (
     <div
-      className={`relative w-[10px] h-[10px] border transition-all duration-200 ${
-        video 
-          ? 'border-accent/30 cursor-pointer hover:border-accent' 
-          : isAdmin 
-            ? 'border-border cursor-pointer hover:border-primary hover:shadow-sm' 
-            : 'border-border/20'
-      }`}
+      className={`relative w-[10px] h-[10px] border transition-all duration-200 ${getBorderStyle()}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleClick}
@@ -56,10 +70,12 @@ const VideoSlot: React.FC<VideoSlotProps> = ({ slotId, onVideoUpload, onVideoVie
       ) : (
         <div className={`w-full h-full bg-muted flex items-center justify-center ${
           isAdmin && isHovered ? 'bg-muted/70' : ''
-        }`}>
-          {isAdmin && isHovered && (
+        } ${isOccupied && !isAdmin ? 'bg-orange-100/30' : ''}`}>
+          {isOccupied && !isAdmin && isHovered ? (
+            <Lock className="w-1 h-1 text-orange-500" style={{ fontSize: '2px' }} />
+          ) : isAdmin && isHovered ? (
             <Upload className="w-1 h-1 text-primary" style={{ fontSize: '2px' }} />
-          )}
+          ) : null}
         </div>
       )}
       

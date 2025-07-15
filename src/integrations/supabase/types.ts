@@ -14,7 +14,107 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      admin_videos: {
+        Row: {
+          created_at: string
+          id: string
+          slot_id: string
+          uploaded_by: string | null
+          video_url: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          slot_id: string
+          uploaded_by?: string | null
+          video_url: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          slot_id?: string
+          uploaded_by?: string | null
+          video_url?: string
+        }
+        Relationships: []
+      }
+      occupied_slots: {
+        Row: {
+          created_at: string
+          id: string
+          slot_id: string
+          submission_id: string | null
+          video_url: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          slot_id: string
+          submission_id?: string | null
+          video_url: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          slot_id?: string
+          submission_id?: string | null
+          video_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "occupied_slots_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "video_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      video_submissions: {
+        Row: {
+          admin_notes: string | null
+          amount_paid: number
+          approved_at: string | null
+          created_at: string
+          email: string
+          id: string
+          payment_intent_id: string
+          rejected_at: string | null
+          slots: Json
+          status: string
+          video_filename: string | null
+          video_url: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          amount_paid: number
+          approved_at?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          payment_intent_id: string
+          rejected_at?: string | null
+          slots: Json
+          status?: string
+          video_filename?: string | null
+          video_url?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          amount_paid?: number
+          approved_at?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          payment_intent_id?: string
+          rejected_at?: string | null
+          slots?: Json
+          status?: string
+          video_filename?: string | null
+          video_url?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

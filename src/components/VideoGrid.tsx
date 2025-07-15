@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useMemo } from 'react';
 import { FixedSizeGrid as Grid } from 'react-window';
 import VideoSlot from './VideoSlot';
@@ -9,6 +10,7 @@ interface VideoData {
 
 interface VideoGridProps {
   videos: VideoData;
+  occupiedSlots: Set<string>;
   onVideoUpload: (slotId: string, file: File) => void;
   onVideoView: (slotId: string, video: string) => void;
 }
@@ -16,7 +18,7 @@ interface VideoGridProps {
 const GRID_SIZE = 1000; // 1000x1000 = 1,000,000 slots
 const SLOT_SIZE = 10; // 10x10 pixels per slot
 
-const VideoGrid: React.FC<VideoGridProps> = ({ videos, onVideoUpload, onVideoView }) => {
+const VideoGrid: React.FC<VideoGridProps> = ({ videos, occupiedSlots, onVideoUpload, onVideoView }) => {
   const [zoom, setZoom] = useState(1);
   const { isAdmin } = useAdminMode();
 
@@ -32,6 +34,7 @@ const VideoGrid: React.FC<VideoGridProps> = ({ videos, onVideoUpload, onVideoVie
 
   const Cell = useCallback(({ columnIndex, rowIndex, style }: any) => {
     const slotId = `${rowIndex}-${columnIndex}`;
+    const isOccupied = occupiedSlots.has(slotId);
     
     return (
       <div style={style}>
@@ -41,10 +44,11 @@ const VideoGrid: React.FC<VideoGridProps> = ({ videos, onVideoUpload, onVideoVie
           onVideoView={handleVideoView}
           video={videos[slotId]}
           isAdmin={isAdmin}
+          isOccupied={isOccupied}
         />
       </div>
     );
-  }, [videos, handleVideoUpload, handleVideoView, isAdmin]);
+  }, [videos, occupiedSlots, handleVideoUpload, handleVideoView, isAdmin]);
 
   const gridWidth = GRID_SIZE * SLOT_SIZE * zoom;
   const gridHeight = GRID_SIZE * SLOT_SIZE * zoom;
@@ -77,7 +81,8 @@ const VideoGrid: React.FC<VideoGridProps> = ({ videos, onVideoUpload, onVideoVie
         <div className="absolute top-4 right-4 z-10 bg-card/80 backdrop-blur-sm rounded-lg p-3 text-foreground text-sm border border-border">
           <div>Total Slots: 1,000,000</div>
           <div className="sparkle-text font-medium">Videos Uploaded: {Object.keys(videos).length}</div>
-          <div>Available: {1000000 - Object.keys(videos).length}</div>
+          <div className="text-orange-500">Occupied Slots: {occupiedSlots.size}</div>
+          <div>Available: {1000000 - occupiedSlots.size}</div>
         </div>
       )}
 

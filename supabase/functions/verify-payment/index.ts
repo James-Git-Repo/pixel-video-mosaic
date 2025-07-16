@@ -30,6 +30,15 @@ serve(async (req) => {
     const session = await stripe.checkout.sessions.retrieve(sessionId);
     
     if (session.payment_status === "paid") {
+      // Get submission details for the email
+      const { data: submission, error: submissionError } = await supabase
+        .from('video_submissions')
+        .select('*')
+        .eq('id', submissionId)
+        .single();
+
+      if (submissionError) throw submissionError;
+
       // Update submission status to under_review
       const { error: updateError } = await supabase
         .from('video_submissions')
@@ -40,6 +49,22 @@ serve(async (req) => {
         .eq('id', submissionId);
 
       if (updateError) throw updateError;
+
+      // Send thank you email
+      try {
+        await supabase.functions.invoke('send-notification', {
+          body: {
+            email: submission.email,
+            type: 'payment_confirmation',
+            slots: submission.slots,
+            amount: submission.amount_paid / 100 // Convert cents to dollars
+          }
+        });
+        console.log('Thank you email sent successfully');
+      } catch (emailError) {
+        console.error('Error sending thank you email:', emailError);
+        // Don't fail the payment verification if email fails
+      }
 
       return new Response(JSON.stringify({ success: true, status: 'paid' }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

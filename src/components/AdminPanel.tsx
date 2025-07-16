@@ -1,8 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { X, Check, FileText, Clock, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { Json } from '@/integrations/supabase/types';
 
 interface Submission {
   id: string;
@@ -40,7 +40,14 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setSubmissions(data || []);
+      
+      // Transform the data to match our interface, converting Json to string[]
+      const transformedData = (data || []).map(item => ({
+        ...item,
+        slots: Array.isArray(item.slots) ? item.slots as string[] : []
+      }));
+      
+      setSubmissions(transformedData);
     } catch (error) {
       console.error('Error loading submissions:', error);
       toast({

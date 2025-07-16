@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { CheckCircle, Loader } from 'lucide-react';
+import { CheckCircle, Loader, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 const PaymentSuccess: React.FC = () => {

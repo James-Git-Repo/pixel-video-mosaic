@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { X, Play } from 'lucide-react';
+import { X, Play, Sparkles } from 'lucide-react';
 
 interface WelcomeVideoModalProps {
   onClose: () => void;
@@ -55,6 +55,19 @@ const WelcomeVideoModal: React.FC<WelcomeVideoModalProps> = ({
               </div>
             </div>
           )}
+
+          {/* AI-Generated Content Requirement */}
+          <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 bg-primary/20 rounded-lg">
+                <Sparkles className="w-5 h-5 text-primary" />
+              </div>
+              <h3 className="text-lg font-semibold text-primary">Content Requirement</h3>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              <strong className="text-foreground">All content must be AI-generated!</strong> This is our only requirement - whether it's AI-created videos, animations, art, music, or any other form of digital content. As long as it's generated using artificial intelligence, it's welcome on our billboard.
+            </p>
+          </div>
 
           {isAdmin && (
             <div className="bg-muted rounded-lg p-4">

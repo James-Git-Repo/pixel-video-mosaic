@@ -223,8 +223,8 @@ const VideoGridInterface: React.FC = () => {
       <div className="bg-muted px-6 py-3 border-b border-border">
         <p className="text-sm text-muted-foreground text-center">
           {isAdmin 
-            ? "Upload videos to single or multiple slots simultaneously. Duration auto-adjusts: 15s base + 5s per additional slot (max 2.5 minutes)."
-            : "Click any video slot to view it, or use the search function to find specific coordinates. Purchase slots for $2 each to upload your own videos!"
+            ? "Upload videos to single or multiple slots simultaneously. Duration auto-adjusts: 15s base + 5s per additional slot (max 2.5 minutes). All content must be AI-generated."
+            : "Click any video slot to view it, or use the search function to find specific coordinates. Purchase slots for $2 each to upload your own AI-generated videos! Only requirement: content must be created using AI."
           }
         </p>
       </div>

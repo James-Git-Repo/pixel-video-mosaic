@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import VideoGrid from './VideoGrid';
 import AdminLogin from './AdminLogin';
@@ -7,7 +6,8 @@ import AdminUploadPopup from './AdminUploadPopup';
 import VideoViewer from './VideoViewer';
 import WelcomeVideoModal from './WelcomeVideoModal';
 import UserUploadPopup from './UserUploadPopup';
-import { Film, Layers, Zap, Settings, LogOut, Eye, Upload, ShoppingCart } from 'lucide-react';
+import AdminPanel from './AdminPanel';
+import { Film, Layers, Zap, Settings, LogOut, Eye, Upload, ShoppingCart, Users } from 'lucide-react';
 import { useAdminMode } from '../hooks/useAdminMode';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -18,6 +18,7 @@ const VideoGridInterface: React.FC = () => {
   const [showSlotSelector, setShowSlotSelector] = useState(false);
   const [showUploadPopup, setShowUploadPopup] = useState(false);
   const [showUserUpload, setShowUserUpload] = useState(false);
+  const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [showWelcomeVideo, setShowWelcomeVideo] = useState(true);
   const [showVideoViewer, setShowVideoViewer] = useState(false);
   const [currentViewedVideo, setCurrentViewedVideo] = useState<{slotId: string, video: string} | null>(null);
@@ -191,6 +192,14 @@ const VideoGridInterface: React.FC = () => {
               </div>
               
               <button
+                onClick={() => setShowAdminPanel(true)}
+                className="flex items-center gap-2 px-3 py-2 bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-lg transition-colors"
+              >
+                <Users className="w-4 h-4" />
+                Manage Submissions
+              </button>
+              
+              <button
                 onClick={() => setShowUploadPopup(true)}
                 className="flex items-center gap-2 px-3 py-2 sparkle-bg text-background rounded-lg hover:opacity-90 transition-opacity"
               >
@@ -299,6 +308,10 @@ const VideoGridInterface: React.FC = () => {
           video={currentViewedVideo.video}
           onClose={handleCloseVideoViewer}
         />
+      )}
+
+      {showAdminPanel && isAdmin && (
+        <AdminPanel onClose={() => setShowAdminPanel(false)} />
       )}
     </div>
   );

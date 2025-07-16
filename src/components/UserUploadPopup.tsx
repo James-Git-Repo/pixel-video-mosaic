@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Upload, X, Plus, Minus, CreditCard, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -137,35 +136,21 @@ const UserUploadPopup: React.FC<UserUploadPopupProps> = ({
 
       if (submissionError) throw submissionError;
 
-      toast({
-        title: "Submission created",
-        description: `Your video submission has been created. Total: $${calculateTotal()}. Payment integration coming soon!`,
+      // Create Stripe checkout session
+      const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke('create-checkout', {
+        body: {
+          slots: selectedSlots,
+          email: email,
+          videoUrl: publicUrl,
+          videoFilename: fileName,
+          submissionId: submission.id
+        }
       });
 
-      // For now, we'll mark as paid and add to occupied slots
-      // In a real implementation, this would happen after Stripe payment
-      const { error: updateError } = await supabase
-        .from('video_submissions')
-        .update({ status: 'under_review' })
-        .eq('id', submission.id);
+      if (checkoutError) throw checkoutError;
 
-      if (updateError) throw updateError;
-
-      // Add to occupied slots
-      const occupiedSlotsData = selectedSlots.map(slotId => ({
-        slot_id: slotId,
-        video_url: publicUrl,
-        submission_id: submission.id
-      }));
-
-      const { error: slotsError } = await supabase
-        .from('occupied_slots')
-        .insert(occupiedSlotsData);
-
-      if (slotsError) throw slotsError;
-
-      onSlotsUpdated();
-      onClose();
+      // Redirect to Stripe checkout
+      window.location.href = checkoutData.url;
 
     } catch (error) {
       console.error('Error creating submission:', error);
@@ -291,17 +276,17 @@ const UserUploadPopup: React.FC<UserUploadPopupProps> = ({
             className="hidden"
           />
 
-          {/* Payment Info */}
+          {/* Updated Payment Info */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div className="flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-blue-500 mt-0.5" />
               <div className="text-sm">
                 <p className="font-medium text-blue-900 mb-1">Payment & Review Process</p>
                 <ul className="text-blue-700 space-y-1">
+                  <li>• Secure payment processing via Stripe</li>
                   <li>• Videos are subject to admin approval before going live</li>
-                  <li>• Payment will be processed via Stripe (integration coming soon)</li>
                   <li>• You'll receive email notifications about your submission status</li>
-                  <li>• Inappropriate content will be rejected with refund</li>
+                  <li>• Inappropriate content will be rejected with full refund</li>
                 </ul>
               </div>
             </div>
@@ -314,7 +299,7 @@ const UserUploadPopup: React.FC<UserUploadPopupProps> = ({
             className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary hover:bg-primary/80 text-primary-foreground rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <CreditCard className="w-4 h-4" />
-            {isProcessing ? 'Processing...' : `Submit & Pay $${calculateTotal()}`}
+            {isProcessing ? 'Processing...' : `Pay $${calculateTotal()} with Stripe`}
           </button>
         </div>
       </div>

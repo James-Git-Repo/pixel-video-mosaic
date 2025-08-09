@@ -27,17 +27,39 @@ const VideoSlot: React.FC<VideoSlotProps> = ({
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
+  const clickTimeoutRef = useRef<number | null>(null);
   const handleClick = () => {
-    if (isSelectingSlots && !isAdmin && onSlotSelect) {
-      // In selection mode, handle slot selection
-      onSlotSelect(slotId);
-    } else if (video && !isAdmin) {
-      // Viewers can click to view the video
+    // Single click behavior
+    if (isAdmin) {
+      if (!video) {
+        // Admins can click to upload when slot is empty
+        fileInputRef.current?.click();
+      }
+      return;
+    }
+
+    // Customers: single-click selects only empty, available slots
+    const canSelect = !video && !isOccupied && onSlotSelect;
+    if (canSelect) {
+      if (clickTimeoutRef.current) {
+        window.clearTimeout(clickTimeoutRef.current);
+        clickTimeoutRef.current = null;
+      }
+      clickTimeoutRef.current = window.setTimeout(() => {
+        onSlotSelect?.(slotId);
+        clickTimeoutRef.current = null;
+      }, 200);
+    }
+  };
+
+  const handleDoubleClick = () => {
+    // Double click opens the video for customers
+    if (!isAdmin && video) {
+      if (clickTimeoutRef.current) {
+        window.clearTimeout(clickTimeoutRef.current);
+        clickTimeoutRef.current = null;
+      }
       onVideoView(slotId, video);
-    } else if (isAdmin && !video) {
-      // Admins can click to upload
-      fileInputRef.current?.click();
     }
   };
 
@@ -55,7 +77,7 @@ const VideoSlot: React.FC<VideoSlotProps> = ({
       return 'border-accent/30 cursor-pointer hover:border-accent';
     } else if (isOccupied && !isAdmin) {
       return 'border-orange-400/50 bg-orange-100/20';
-    } else if (isSelectingSlots && !isAdmin && !video && !isOccupied) {
+    } else if (!isAdmin && !video && !isOccupied) {
       return 'border-primary/50 cursor-pointer hover:border-primary hover:bg-primary/10';
     } else if (isAdmin) {
       return 'border-border cursor-pointer hover:border-primary hover:shadow-sm';
@@ -70,6 +92,7 @@ const VideoSlot: React.FC<VideoSlotProps> = ({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleClick}
+      onDoubleClick={handleDoubleClick}
     >
       {video ? (
         <video

@@ -151,7 +151,7 @@ const VideoGridInterface: React.FC = () => {
   };
 
   const handleSlotSelect = (slotId: string) => {
-    if (!isSelectingSlots || isAdmin) return;
+    if (isAdmin) return;
     
     setSelectedSlots(prev => {
       const newSelected = new Set(prev);
@@ -265,9 +265,7 @@ const VideoGridInterface: React.FC = () => {
           <p className="text-sm text-foreground">
             {isAdmin 
               ? "Upload videos to single or multiple slots simultaneously. Duration auto-adjusts: 15s base + 5s per additional slot (max 2.5 minutes)."
-              : isSelectingSlots
-                ? "Click on empty slots to select them for purchase, then click 'Purchase Selected Slots' below."
-                : "Click any video to view it, or start selecting empty slots to buy them for just $0.50 each!"
+              : "Single-click empty slots to select. Double-click any video to view. Each slot costs $0.50."
             }
           </p>
           <div className="flex items-center justify-center gap-2 text-primary font-semibold">
@@ -281,61 +279,49 @@ const VideoGridInterface: React.FC = () => {
       {/* Controls for non-admin users */}
       {!isAdmin && (
         <div className="absolute top-4 right-4 z-20 flex gap-2">
-          {!isSelectingSlots ? (
-            <>
-              <button
-                onClick={handleStartSelection}
-                className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/80 text-primary-foreground rounded-lg transition-colors shadow-lg"
-              >
-                <ShoppingCart className="w-4 h-4" />
-                Select & Buy Slots
-              </button>
-              <button
-                onClick={() => setShowUserUpload(true)}
-                className="flex items-center gap-2 px-3 py-2 bg-card hover:bg-muted border border-border rounded-lg transition-colors"
-              >
-                <Upload className="w-4 h-4" />
-                Manual Entry
-              </button>
-              <button
-                onClick={() => setShowSlotSelector(true)}
-                className="flex items-center gap-2 px-3 py-2 bg-card hover:bg-muted border border-border rounded-lg transition-colors"
-              >
-                <Eye className="w-4 h-4" />
-                Search Slot
-              </button>
-              <button
-                onClick={handleAdminAccess}
-                className="flex items-center gap-2 px-3 py-2 bg-card hover:bg-muted border border-border rounded-lg transition-colors"
-              >
-                <Settings className="w-4 h-4" />
-                Admin
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                onClick={handleCancelSelection}
-                className="flex items-center gap-2 px-3 py-2 bg-muted hover:bg-muted/80 text-muted-foreground border border-border rounded-lg transition-colors"
-              >
-                <X className="w-4 h-4" />
-                Cancel
-              </button>
-              <button
-                onClick={handlePurchaseSelected}
-                disabled={selectedSlots.size === 0}
-                className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/80 text-primary-foreground rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
-              >
-                <ShoppingCart className="w-4 h-4" />
-                Buy {selectedSlots.size} Slot{selectedSlots.size !== 1 ? 's' : ''} (${(selectedSlots.size * 0.5).toFixed(2)})
-              </button>
-            </>
+          <button
+            onClick={handlePurchaseSelected}
+            disabled={selectedSlots.size === 0}
+            className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/80 text-primary-foreground rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+          >
+            <ShoppingCart className="w-4 h-4" />
+            Buy {selectedSlots.size} Slot{selectedSlots.size !== 1 ? 's' : ''} (${(selectedSlots.size * 0.5).toFixed(2)})
+          </button>
+          {selectedSlots.size > 0 && (
+            <button
+              onClick={() => setSelectedSlots(new Set())}
+              className="flex items-center gap-2 px-3 py-2 bg-muted hover:bg-muted/80 text-muted-foreground border border-border rounded-lg transition-colors"
+            >
+              <X className="w-4 h-4" />
+              Clear
+            </button>
           )}
+          <button
+            onClick={() => setShowUserUpload(true)}
+            className="flex items-center gap-2 px-3 py-2 bg-card hover:bg-muted border border-border rounded-lg transition-colors"
+          >
+            <Upload className="w-4 h-4" />
+            Manual Entry
+          </button>
+          <button
+            onClick={() => setShowSlotSelector(true)}
+            className="flex items-center gap-2 px-3 py-2 bg-card hover:bg-muted border border-border rounded-lg transition-colors"
+          >
+            <Eye className="w-4 h-4" />
+            Search Slot
+          </button>
+          <button
+            onClick={handleAdminAccess}
+            className="flex items-center gap-2 px-3 py-2 bg-card hover:bg-muted border border-border rounded-lg transition-colors"
+          >
+            <Settings className="w-4 h-4" />
+            Admin
+          </button>
         </div>
       )}
 
       {/* Selection Status Bar */}
-      {isSelectingSlots && !isAdmin && (
+      {selectedSlots.size > 0 && !isAdmin && (
         <div className="absolute top-20 right-4 z-20 bg-card border border-border rounded-lg p-3 shadow-lg">
           <div className="text-sm">
             <div className="font-medium">Slot Selection Mode</div>

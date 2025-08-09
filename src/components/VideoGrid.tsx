@@ -13,12 +13,23 @@ interface VideoGridProps {
   occupiedSlots: Set<string>;
   onVideoUpload: (slotId: string, file: File) => void;
   onVideoView: (slotId: string, video: string) => void;
+  isSelectingSlots?: boolean;
+  selectedSlots?: Set<string>;
+  onSlotSelect?: (slotId: string) => void;
 }
 
 const GRID_SIZE = 1000; // 1000x1000 = 1,000,000 slots
 const SLOT_SIZE = 10; // 10x10 pixels per slot
 
-const VideoGrid: React.FC<VideoGridProps> = ({ videos, occupiedSlots, onVideoUpload, onVideoView }) => {
+const VideoGrid: React.FC<VideoGridProps> = ({ 
+  videos, 
+  occupiedSlots, 
+  onVideoUpload, 
+  onVideoView, 
+  isSelectingSlots = false,
+  selectedSlots = new Set(),
+  onSlotSelect 
+}) => {
   const [zoom, setZoom] = useState(1);
   const { isAdmin } = useAdminMode();
 
@@ -45,10 +56,13 @@ const VideoGrid: React.FC<VideoGridProps> = ({ videos, occupiedSlots, onVideoUpl
           video={videos[slotId]}
           isAdmin={isAdmin}
           isOccupied={isOccupied}
+          isSelectingSlots={isSelectingSlots}
+          isSelected={selectedSlots.has(slotId)}
+          onSlotSelect={onSlotSelect}
         />
       </div>
     );
-  }, [videos, occupiedSlots, handleVideoUpload, handleVideoView, isAdmin]);
+  }, [videos, occupiedSlots, handleVideoUpload, handleVideoView, isAdmin, isSelectingSlots, selectedSlots, onSlotSelect]);
 
   const gridWidth = GRID_SIZE * SLOT_SIZE * zoom;
   const gridHeight = GRID_SIZE * SLOT_SIZE * zoom;

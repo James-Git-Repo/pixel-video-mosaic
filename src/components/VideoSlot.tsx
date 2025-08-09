@@ -9,6 +9,9 @@ interface VideoSlotProps {
   video?: string;
   isAdmin: boolean;
   isOccupied: boolean;
+  isSelectingSlots?: boolean;
+  isSelected?: boolean;
+  onSlotSelect?: (slotId: string) => void;
 }
 
 const VideoSlot: React.FC<VideoSlotProps> = ({ 
@@ -17,13 +20,19 @@ const VideoSlot: React.FC<VideoSlotProps> = ({
   onVideoView, 
   video, 
   isAdmin, 
-  isOccupied 
+  isOccupied,
+  isSelectingSlots = false,
+  isSelected = false,
+  onSlotSelect
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleClick = () => {
-    if (video && !isAdmin) {
+    if (isSelectingSlots && !isAdmin && onSlotSelect) {
+      // In selection mode, handle slot selection
+      onSlotSelect(slotId);
+    } else if (video && !isAdmin) {
       // Viewers can click to view the video
       onVideoView(slotId, video);
     } else if (isAdmin && !video) {
@@ -40,10 +49,14 @@ const VideoSlot: React.FC<VideoSlotProps> = ({
   };
 
   const getBorderStyle = () => {
-    if (video) {
+    if (isSelected) {
+      return 'border-primary border-2 bg-primary/20 cursor-pointer';
+    } else if (video) {
       return 'border-accent/30 cursor-pointer hover:border-accent';
     } else if (isOccupied && !isAdmin) {
       return 'border-orange-400/50 bg-orange-100/20';
+    } else if (isSelectingSlots && !isAdmin && !video && !isOccupied) {
+      return 'border-primary/50 cursor-pointer hover:border-primary hover:bg-primary/10';
     } else if (isAdmin) {
       return 'border-border cursor-pointer hover:border-primary hover:shadow-sm';
     } else {

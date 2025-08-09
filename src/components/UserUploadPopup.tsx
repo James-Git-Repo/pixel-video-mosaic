@@ -7,14 +7,16 @@ interface UserUploadPopupProps {
   onClose: () => void;
   occupiedSlots: Set<string>;
   onSlotsUpdated: () => void;
+  preSelectedSlots?: string[];
 }
 
 const UserUploadPopup: React.FC<UserUploadPopupProps> = ({ 
   onClose, 
   occupiedSlots, 
-  onSlotsUpdated 
+  onSlotsUpdated,
+  preSelectedSlots = []
 }) => {
-  const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
+  const [selectedSlots, setSelectedSlots] = useState<string[]>(preSelectedSlots);
   const [uploadedVideo, setUploadedVideo] = useState<File | null>(null);
   const [uploadedVideoUrl, setUploadedVideoUrl] = useState<string | null>(null);
   const [currentSlotInput, setCurrentSlotInput] = useState('');
@@ -69,7 +71,7 @@ const UserUploadPopup: React.FC<UserUploadPopupProps> = ({
   };
 
   const calculateTotal = () => {
-    return selectedSlots.length * 2; // $2 per slot
+    return selectedSlots.length * 0.5; // $0.50 per slot
   };
 
   const handleFileSelect = () => {
@@ -195,9 +197,9 @@ const UserUploadPopup: React.FC<UserUploadPopupProps> = ({
           {/* Slot Selection */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium">Select Video Slots ($2 each)</label>
+              <label className="text-sm font-medium">Select Video Slots ($0.50 each)</label>
               <div className="text-sm text-muted-foreground">
-                Total: ${calculateTotal()}
+                Total: ${calculateTotal().toFixed(2)}
               </div>
             </div>
             
@@ -222,7 +224,7 @@ const UserUploadPopup: React.FC<UserUploadPopupProps> = ({
 
             {selectedSlots.length > 0 && (
               <div className="bg-muted rounded-lg p-4">
-                <h4 className="font-medium mb-2">Selected Slots ({selectedSlots.length}) - ${calculateTotal()}</h4>
+                <h4 className="font-medium mb-2">Selected Slots ({selectedSlots.length}) - ${calculateTotal().toFixed(2)}</h4>
                 <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
                   {selectedSlots.map((slotId) => (
                     <div key={slotId} className="flex items-center gap-2 bg-accent/20 px-2 py-1 rounded">
@@ -299,7 +301,7 @@ const UserUploadPopup: React.FC<UserUploadPopupProps> = ({
             className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary hover:bg-primary/80 text-primary-foreground rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <CreditCard className="w-4 h-4" />
-            {isProcessing ? 'Processing...' : `Pay $${calculateTotal()} with Stripe`}
+            {isProcessing ? 'Processing...' : `Pay $${calculateTotal().toFixed(2)} with Stripe`}
           </button>
         </div>
       </div>

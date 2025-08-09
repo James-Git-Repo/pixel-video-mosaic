@@ -7,7 +7,7 @@ import VideoViewer from './VideoViewer';
 import WelcomeVideoModal from './WelcomeVideoModal';
 import UserUploadPopup from './UserUploadPopup';
 import AdminPanel from './AdminPanel';
-import { Film, Layers, Zap, Settings, LogOut, Eye, Upload, ShoppingCart, Users } from 'lucide-react';
+import { Film, Layers, Zap, Settings, LogOut, Eye, Upload, ShoppingCart, Users, X, Sparkles } from 'lucide-react';
 import { useAdminMode } from '../hooks/useAdminMode';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -25,6 +25,8 @@ const VideoGridInterface: React.FC = () => {
   const [videos, setVideos] = useState<{ [slotId: string]: string }>({});
   const [occupiedSlots, setOccupiedSlots] = useState<Set<string>>(new Set());
   const [welcomeVideo, setWelcomeVideo] = useState<string | null>(null);
+  const [isSelectingSlots, setIsSelectingSlots] = useState(false);
+  const [selectedSlots, setSelectedSlots] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
   // Load occupied slots and videos on component mount
@@ -148,6 +150,44 @@ const VideoGridInterface: React.FC = () => {
     setShowVideoViewer(true);
   };
 
+  const handleSlotSelect = (slotId: string) => {
+    if (!isSelectingSlots || isAdmin) return;
+    
+    setSelectedSlots(prev => {
+      const newSelected = new Set(prev);
+      if (newSelected.has(slotId)) {
+        newSelected.delete(slotId);
+      } else {
+        if (occupiedSlots.has(slotId) || videos[slotId]) {
+          toast({
+            title: "Slot unavailable",
+            description: "This slot is already occupied. Please select an empty slot.",
+            variant: "destructive",
+          });
+          return prev;
+        }
+        newSelected.add(slotId);
+      }
+      return newSelected;
+    });
+  };
+
+  const handleStartSelection = () => {
+    setIsSelectingSlots(true);
+    setSelectedSlots(new Set());
+  };
+
+  const handleCancelSelection = () => {
+    setIsSelectingSlots(false);
+    setSelectedSlots(new Set());
+  };
+
+  const handlePurchaseSelected = () => {
+    if (selectedSlots.size === 0) return;
+    setShowUserUpload(true);
+    setIsSelectingSlots(false);
+  };
+
   const handleCloseVideoViewer = () => {
     setShowVideoViewer(false);
     setCurrentViewedVideo(null);
@@ -220,39 +260,94 @@ const VideoGridInterface: React.FC = () => {
       )}
 
       {/* Instructions */}
-      <div className="bg-muted px-6 py-3 border-b border-border">
-        <p className="text-sm text-muted-foreground text-center">
-          {isAdmin 
-            ? "Upload videos to single or multiple slots simultaneously. Duration auto-adjusts: 15s base + 5s per additional slot (max 2.5 minutes). All content must be AI-generated."
-            : "Click any video slot to view it, or use the search function to find specific coordinates. Purchase slots for $2 each to upload your own AI-generated videos! Only requirement: content must be created using AI."
-          }
-        </p>
+      <div className="bg-gradient-to-r from-primary/10 to-secondary/10 border-b border-primary/20 px-6 py-4">
+        <div className="text-center space-y-2">
+          <p className="text-sm text-foreground">
+            {isAdmin 
+              ? "Upload videos to single or multiple slots simultaneously. Duration auto-adjusts: 15s base + 5s per additional slot (max 2.5 minutes)."
+              : isSelectingSlots
+                ? "Click on empty slots to select them for purchase, then click 'Purchase Selected Slots' below."
+                : "Click any video to view it, or start selecting empty slots to buy them for just $0.50 each!"
+            }
+          </p>
+          <div className="flex items-center justify-center gap-2 text-primary font-semibold">
+            <Sparkles className="w-4 h-4" />
+            <span className="text-sm">All content must be AI-generated!</span>
+            <Sparkles className="w-4 h-4" />
+          </div>
+        </div>
       </div>
 
       {/* Controls for non-admin users */}
       {!isAdmin && (
         <div className="absolute top-4 right-4 z-20 flex gap-2">
-          <button
-            onClick={() => setShowUserUpload(true)}
-            className="flex items-center gap-2 px-3 py-2 bg-primary hover:bg-primary/80 text-primary-foreground rounded-lg transition-colors"
-          >
-            <ShoppingCart className="w-4 h-4" />
-            Buy Slots
-          </button>
-          <button
-            onClick={() => setShowSlotSelector(true)}
-            className="flex items-center gap-2 px-3 py-2 bg-card hover:bg-muted border border-border rounded-lg transition-colors"
-          >
-            <Eye className="w-4 h-4" />
-            Search Slot
-          </button>
-          <button
-            onClick={handleAdminAccess}
-            className="flex items-center gap-2 px-3 py-2 bg-card hover:bg-muted border border-border rounded-lg transition-colors"
-          >
-            <Settings className="w-4 h-4" />
-            Admin
-          </button>
+          {!isSelectingSlots ? (
+            <>
+              <button
+                onClick={handleStartSelection}
+                className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/80 text-primary-foreground rounded-lg transition-colors shadow-lg"
+              >
+                <ShoppingCart className="w-4 h-4" />
+                Select & Buy Slots
+              </button>
+              <button
+                onClick={() => setShowUserUpload(true)}
+                className="flex items-center gap-2 px-3 py-2 bg-card hover:bg-muted border border-border rounded-lg transition-colors"
+              >
+                <Upload className="w-4 h-4" />
+                Manual Entry
+              </button>
+              <button
+                onClick={() => setShowSlotSelector(true)}
+                className="flex items-center gap-2 px-3 py-2 bg-card hover:bg-muted border border-border rounded-lg transition-colors"
+              >
+                <Eye className="w-4 h-4" />
+                Search Slot
+              </button>
+              <button
+                onClick={handleAdminAccess}
+                className="flex items-center gap-2 px-3 py-2 bg-card hover:bg-muted border border-border rounded-lg transition-colors"
+              >
+                <Settings className="w-4 h-4" />
+                Admin
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={handleCancelSelection}
+                className="flex items-center gap-2 px-3 py-2 bg-muted hover:bg-muted/80 text-muted-foreground border border-border rounded-lg transition-colors"
+              >
+                <X className="w-4 h-4" />
+                Cancel
+              </button>
+              <button
+                onClick={handlePurchaseSelected}
+                disabled={selectedSlots.size === 0}
+                className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/80 text-primary-foreground rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+              >
+                <ShoppingCart className="w-4 h-4" />
+                Buy {selectedSlots.size} Slot{selectedSlots.size !== 1 ? 's' : ''} (${(selectedSlots.size * 0.5).toFixed(2)})
+              </button>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Selection Status Bar */}
+      {isSelectingSlots && !isAdmin && (
+        <div className="absolute top-20 right-4 z-20 bg-card border border-border rounded-lg p-3 shadow-lg">
+          <div className="text-sm">
+            <div className="font-medium">Slot Selection Mode</div>
+            <div className="text-muted-foreground">
+              Selected: {selectedSlots.size} slot{selectedSlots.size !== 1 ? 's' : ''}
+            </div>
+            {selectedSlots.size > 0 && (
+              <div className="text-primary font-medium">
+                Total: ${(selectedSlots.size * 0.5).toFixed(2)}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -263,6 +358,9 @@ const VideoGridInterface: React.FC = () => {
           occupiedSlots={occupiedSlots}
           onVideoUpload={handleVideoUpload}
           onVideoView={handleVideoView}
+          isSelectingSlots={isSelectingSlots}
+          selectedSlots={selectedSlots}
+          onSlotSelect={handleSlotSelect}
         />
       </main>
 
@@ -287,9 +385,13 @@ const VideoGridInterface: React.FC = () => {
 
       {showUserUpload && !isAdmin && (
         <UserUploadPopup
-          onClose={() => setShowUserUpload(false)}
+          onClose={() => {
+            setShowUserUpload(false);
+            setSelectedSlots(new Set());
+          }}
           occupiedSlots={occupiedSlots}
           onSlotsUpdated={loadOccupiedSlots}
+          preSelectedSlots={Array.from(selectedSlots)}
         />
       )}
 

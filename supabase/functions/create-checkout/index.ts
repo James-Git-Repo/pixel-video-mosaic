@@ -20,7 +20,7 @@ serve(async (req) => {
       apiVersion: "2023-10-16",
     });
 
-    const totalAmount = slots.length * 200; // $2.00 per slot in cents
+    const totalAmount = slots.length * 50; // $0.50 per slot in cents
 
     const session = await stripe.checkout.sessions.create({
       customer_email: email,

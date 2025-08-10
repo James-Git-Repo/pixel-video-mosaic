@@ -330,7 +330,7 @@ const VideoGrid: React.FC<VideoGridProps> = ({
           }}
         >
           <div className="text-sm font-medium">
-            {floatingPill.slots} slot{floatingPill.slots !== 1 ? 's' : ''} • ${(floatingPill.slots * 0.5).toFixed(2)} • Max {calculateMaxDuration(floatingPill.slots)}s
+            {floatingPill.slots} slot{floatingPill.slots !== 1 ? 's' : ''} • ${(floatingPill.slots * 0.50).toFixed(2)} USD • Max {calculateMaxDuration(floatingPill.slots)}s
           </div>
         </div>
       )}

@@ -153,6 +153,27 @@ const VideoGridInterface: React.FC = () => {
     setSelectedSlots(newSelection);
   };
 
+  // Calculate selection dimensions
+  const getSelectionDimensions = () => {
+    if (selectedSlots.size === 0) return { width: 0, height: 0 };
+    
+    const slots = Array.from(selectedSlots);
+    const coords = slots.map(slot => {
+      const [row, col] = slot.split('-').map(Number);
+      return { row, col };
+    });
+    
+    const minRow = Math.min(...coords.map(c => c.row));
+    const maxRow = Math.max(...coords.map(c => c.row));
+    const minCol = Math.min(...coords.map(c => c.col));
+    const maxCol = Math.max(...coords.map(c => c.col));
+    
+    return {
+      width: maxCol - minCol + 1,
+      height: maxRow - minRow + 1
+    };
+  };
+
   const handlePurchaseSelected = () => {
     if (selectedSlots.size === 0) return;
     setShowUserUpload(true);
@@ -235,7 +256,7 @@ const VideoGridInterface: React.FC = () => {
           <p className="text-sm text-foreground">
             {isAdmin 
               ? "Upload videos to single or multiple slots simultaneously. Duration auto-adjusts: 15s base + 5s per additional slot (max 2.5 minutes)."
-              : "Drag to select rectangular areas. Double-click videos to view or empty slots for info. Each slot costs $0.50."
+              : "Drag to select rectangular areas. Double-click videos to view or empty slots for info. Each slot costs $0.50 USD."
             }
           </p>
           <div className="flex items-center justify-center gap-2 text-primary font-semibold">
@@ -255,7 +276,7 @@ const VideoGridInterface: React.FC = () => {
             className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/80 text-primary-foreground rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
           >
             <ShoppingCart className="w-4 h-4" />
-            Buy {selectedSlots.size} Slot{selectedSlots.size !== 1 ? 's' : ''} (${(selectedSlots.size * 0.5).toFixed(2)})
+            Buy {selectedSlots.size} Slot{selectedSlots.size !== 1 ? 's' : ''} (${(selectedSlots.size * 0.50).toFixed(2)})
           </button>
           {selectedSlots.size > 0 && (
             <button
@@ -290,19 +311,35 @@ const VideoGridInterface: React.FC = () => {
         </div>
       )}
 
-      {/* Selection Status Bar */}
+      {/* Selection Summary Panel */}
       {selectedSlots.size > 0 && !isAdmin && (
-        <div className="absolute top-20 right-4 z-20 bg-card border border-border rounded-lg p-3 shadow-lg">
-          <div className="text-sm">
-            <div className="font-medium">Slot Selection Mode</div>
-            <div className="text-muted-foreground">
-              Selected: {selectedSlots.size} slot{selectedSlots.size !== 1 ? 's' : ''}
+        <div className="absolute top-20 right-4 z-20 bg-card border border-border rounded-lg p-4 shadow-lg min-w-[280px]">
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-primary rounded-full"></div>
+              <h3 className="font-semibold text-foreground">Selection Summary</h3>
             </div>
-            {selectedSlots.size > 0 && (
-              <div className="text-primary font-medium">
-                Total: ${(selectedSlots.size * 0.5).toFixed(2)}
+            
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <div className="text-muted-foreground">Dimensions</div>
+                <div className="font-medium">{getSelectionDimensions().width}×{getSelectionDimensions().height}</div>
               </div>
-            )}
+              <div>
+                <div className="text-muted-foreground">Total Slots</div>
+                <div className="font-medium">{selectedSlots.size}</div>
+              </div>
+            </div>
+            
+            <div className="pt-2 border-t border-border">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Total Price</span>
+                <span className="text-lg font-bold text-primary">${(selectedSlots.size * 0.50).toFixed(2)} USD</span>
+              </div>
+              <div className="text-xs text-muted-foreground mt-1">
+                $0.50 per slot
+              </div>
+            </div>
           </div>
         </div>
       )}

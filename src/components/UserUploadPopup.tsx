@@ -71,7 +71,7 @@ const UserUploadPopup: React.FC<UserUploadPopupProps> = ({
   };
 
   const calculateTotal = () => {
-    return selectedSlots.length * 0.5; // $0.50 per slot
+    return selectedSlots.length * 0.50; // $0.50 USD per slot
   };
 
   const handleFileSelect = () => {
@@ -197,9 +197,9 @@ const UserUploadPopup: React.FC<UserUploadPopupProps> = ({
           {/* Slot Selection */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium">Select Video Slots ($0.50 each)</label>
+              <label className="text-sm font-medium">Select Video Slots ($0.50 USD each)</label>
               <div className="text-sm text-muted-foreground">
-                Total: ${calculateTotal().toFixed(2)}
+                Total: ${calculateTotal().toFixed(2)} USD
               </div>
             </div>
             

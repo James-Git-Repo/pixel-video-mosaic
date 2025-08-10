@@ -25,7 +25,6 @@ const VideoGridInterface: React.FC = () => {
   const [videos, setVideos] = useState<{ [slotId: string]: string }>({});
   const [occupiedSlots, setOccupiedSlots] = useState<Set<string>>(new Set());
   const [welcomeVideo, setWelcomeVideo] = useState<string | null>(null);
-  const [isSelectingSlots, setIsSelectingSlots] = useState(false);
   const [selectedSlots, setSelectedSlots] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
@@ -150,42 +149,13 @@ const VideoGridInterface: React.FC = () => {
     setShowVideoViewer(true);
   };
 
-  const handleSlotSelect = (slotId: string) => {
-    if (isAdmin) return;
-    
-    setSelectedSlots(prev => {
-      const newSelected = new Set(prev);
-      if (newSelected.has(slotId)) {
-        newSelected.delete(slotId);
-      } else {
-        if (occupiedSlots.has(slotId) || videos[slotId]) {
-          toast({
-            title: "Slot unavailable",
-            description: "This slot is already occupied. Please select an empty slot.",
-            variant: "destructive",
-          });
-          return prev;
-        }
-        newSelected.add(slotId);
-      }
-      return newSelected;
-    });
-  };
-
-  const handleStartSelection = () => {
-    setIsSelectingSlots(true);
-    setSelectedSlots(new Set());
-  };
-
-  const handleCancelSelection = () => {
-    setIsSelectingSlots(false);
-    setSelectedSlots(new Set());
+  const handleSelectionChange = (newSelection: Set<string>) => {
+    setSelectedSlots(newSelection);
   };
 
   const handlePurchaseSelected = () => {
     if (selectedSlots.size === 0) return;
     setShowUserUpload(true);
-    setIsSelectingSlots(false);
   };
 
   const handleCloseVideoViewer = () => {
@@ -265,7 +235,7 @@ const VideoGridInterface: React.FC = () => {
           <p className="text-sm text-foreground">
             {isAdmin 
               ? "Upload videos to single or multiple slots simultaneously. Duration auto-adjusts: 15s base + 5s per additional slot (max 2.5 minutes)."
-              : "Single-click empty slots to select. Double-click any video to view. Each slot costs $0.50."
+              : "Drag to select rectangular areas. Double-click videos to view or empty slots for info. Each slot costs $0.50."
             }
           </p>
           <div className="flex items-center justify-center gap-2 text-primary font-semibold">
@@ -344,9 +314,8 @@ const VideoGridInterface: React.FC = () => {
           occupiedSlots={occupiedSlots}
           onVideoUpload={handleVideoUpload}
           onVideoView={handleVideoView}
-          isSelectingSlots={isSelectingSlots}
           selectedSlots={selectedSlots}
-          onSlotSelect={handleSlotSelect}
+          onSelectionChange={handleSelectionChange}
         />
       </main>
 

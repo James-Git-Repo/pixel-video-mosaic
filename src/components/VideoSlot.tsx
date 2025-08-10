@@ -9,9 +9,8 @@ interface VideoSlotProps {
   video?: string;
   isAdmin: boolean;
   isOccupied: boolean;
-  isSelectingSlots?: boolean;
+  hasVideo: boolean;
   isSelected?: boolean;
-  onSlotSelect?: (slotId: string) => void;
 }
 
 const VideoSlot: React.FC<VideoSlotProps> = ({ 
@@ -21,11 +20,11 @@ const VideoSlot: React.FC<VideoSlotProps> = ({
   video, 
   isAdmin, 
   isOccupied,
-  isSelectingSlots = false,
-  isSelected = false,
-  onSlotSelect
+  hasVideo,
+  isSelected = false
 }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const [showEmptyTooltip, setShowEmptyTooltip] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const clickTimeoutRef = useRef<number | null>(null);
   const handleClick = () => {
@@ -38,28 +37,24 @@ const VideoSlot: React.FC<VideoSlotProps> = ({
       return;
     }
 
-    // Customers: single-click selects only empty, available slots
-    const canSelect = !video && !isOccupied && onSlotSelect;
-    if (canSelect) {
-      if (clickTimeoutRef.current) {
-        window.clearTimeout(clickTimeoutRef.current);
-        clickTimeoutRef.current = null;
-      }
-      clickTimeoutRef.current = window.setTimeout(() => {
-        onSlotSelect?.(slotId);
-        clickTimeoutRef.current = null;
-      }, 200);
-    }
+    // For customers, single click does nothing - selection is handled by drag
   };
 
   const handleDoubleClick = () => {
-    // Double click opens the video for customers
-    if (!isAdmin && video) {
+    // Double click behavior
+    if (isAdmin) return;
+    
+    if (video || hasVideo) {
+      // Double click opens the video for customers
       if (clickTimeoutRef.current) {
         window.clearTimeout(clickTimeoutRef.current);
         clickTimeoutRef.current = null;
       }
-      onVideoView(slotId, video);
+      onVideoView(slotId, video || '');
+    } else {
+      // Double click on empty slot shows tooltip
+      setShowEmptyTooltip(true);
+      setTimeout(() => setShowEmptyTooltip(false), 2000);
     }
   };
 
@@ -72,13 +67,13 @@ const VideoSlot: React.FC<VideoSlotProps> = ({
 
   const getBorderStyle = () => {
     if (isSelected) {
-      return 'border-primary border-2 bg-primary/20 cursor-pointer';
-    } else if (video) {
+      return 'border-primary border-2 bg-primary/20';
+    } else if (video || hasVideo) {
       return 'border-accent/30 cursor-pointer hover:border-accent';
     } else if (isOccupied && !isAdmin) {
-      return 'border-orange-400/50 bg-orange-100/20';
-    } else if (!isAdmin && !video && !isOccupied) {
-      return 'border-primary/50 cursor-pointer hover:border-primary hover:bg-primary/10';
+      return 'border-orange-400/50 bg-orange-100/20 cursor-not-allowed';
+    } else if (!isAdmin && !video && !hasVideo && !isOccupied) {
+      return 'border-border/30 cursor-crosshair hover:border-primary/50';
     } else if (isAdmin) {
       return 'border-border cursor-pointer hover:border-primary hover:shadow-sm';
     } else {
@@ -112,6 +107,13 @@ const VideoSlot: React.FC<VideoSlotProps> = ({
           ) : isAdmin && isHovered ? (
             <Upload className="w-1 h-1 text-primary" style={{ fontSize: '2px' }} />
           ) : null}
+        </div>
+      )}
+      
+      {/* Empty Slot Tooltip */}
+      {showEmptyTooltip && !video && !hasVideo && (
+        <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-muted text-muted-foreground px-2 py-1 rounded text-xs whitespace-nowrap z-50 border border-border">
+          Empty slot
         </div>
       )}
       

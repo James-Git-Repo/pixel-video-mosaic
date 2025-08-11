@@ -107,12 +107,31 @@ const VideoGrid: React.FC<VideoGridProps> = ({
   }, []);
 
   const validateSelection = useCallback((slots: string[]): { valid: boolean; message?: string } => {
-    // Check if any slot is occupied
+    if (slots.length === 0) return { valid: false, message: "No slots selected" };
+    
+    // Check if selection forms a proper rectangle
+    const coords = slots.map(slot => {
+      const [row, col] = slot.split('-').map(Number);
+      return { row, col };
+    });
+    
+    const minRow = Math.min(...coords.map(c => c.row));
+    const maxRow = Math.max(...coords.map(c => c.row));
+    const minCol = Math.min(...coords.map(c => c.col));
+    const maxCol = Math.max(...coords.map(c => c.col));
+    
+    const expectedSlots = (maxRow - minRow + 1) * (maxCol - minCol + 1);
+    if (slots.length !== expectedSlots) {
+      return { valid: false, message: "Selection must be a rectangle" };
+    }
+    
+    // Check if any slot is occupied, pending, or has video
     for (const slot of slots) {
       if (occupiedSlots.has(slot) || videos[slot]) {
-        return { valid: false, message: "Selection contains occupied slots" };
+        return { valid: false, message: "Selection contains occupied or pending slots" };
       }
     }
+    
     return { valid: true };
   }, [occupiedSlots, videos]);
 
@@ -235,6 +254,15 @@ const VideoGrid: React.FC<VideoGridProps> = ({
     );
   };
 
+  const handleDoubleClick = useCallback((slotId: string) => {
+    // For double-click on multi-slot videos, find the full rectangle
+    if (videos[slotId]) {
+      // Find if this slot belongs to a multi-slot video by checking video_submissions
+      // For now, just handle single slot videos
+      handleVideoView(slotId, videos[slotId]);
+    }
+  }, [videos, handleVideoView]);
+
   const Cell = useCallback(({ columnIndex, rowIndex, style }: any) => {
     const slotId = `${rowIndex}-${columnIndex}`;
     const isOccupied = occupiedSlots.has(slotId);
@@ -246,6 +274,7 @@ const VideoGrid: React.FC<VideoGridProps> = ({
           slotId={slotId}
           onVideoUpload={handleVideoUpload}
           onVideoView={handleVideoView}
+          onDoubleClick={handleDoubleClick}
           video={videos[slotId]}
           isAdmin={isAdmin}
           isOccupied={isOccupied}
@@ -254,7 +283,7 @@ const VideoGrid: React.FC<VideoGridProps> = ({
         />
       </div>
     );
-  }, [videos, occupiedSlots, handleVideoUpload, handleVideoView, isAdmin, selectedSlots]);
+  }, [videos, occupiedSlots, handleVideoUpload, handleVideoView, handleDoubleClick, isAdmin, selectedSlots]);
 
   const gridWidth = GRID_SIZE * SLOT_SIZE * zoom;
   const gridHeight = GRID_SIZE * SLOT_SIZE * zoom;

@@ -6,6 +6,7 @@ interface VideoSlotProps {
   slotId: string;
   onVideoUpload: (slotId: string, file: File) => void;
   onVideoView: (slotId: string, video: string) => void;
+  onDoubleClick?: (slotId: string) => void;
   video?: string;
   isAdmin: boolean;
   isOccupied: boolean;
@@ -17,11 +18,12 @@ const VideoSlot: React.FC<VideoSlotProps> = ({
   slotId, 
   onVideoUpload, 
   onVideoView, 
+  onDoubleClick,
   video, 
   isAdmin, 
-  isOccupied,
-  hasVideo,
-  isSelected = false
+  isOccupied, 
+  hasVideo, 
+  isSelected = false 
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [showEmptyTooltip, setShowEmptyTooltip] = useState(false);

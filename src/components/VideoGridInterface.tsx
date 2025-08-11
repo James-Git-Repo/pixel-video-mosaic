@@ -174,9 +174,54 @@ const VideoGridInterface: React.FC = () => {
     };
   };
 
-  const handlePurchaseSelected = () => {
+  const handlePurchaseSelected = async () => {
     if (selectedSlots.size === 0) return;
-    setShowUserUpload(true);
+    
+    // Create slot hold first
+    const slots = Array.from(selectedSlots);
+    const coords = slots.map(slot => {
+      const [row, col] = slot.split('-').map(Number);
+      return { row, col };
+    });
+    
+    const minRow = Math.min(...coords.map(c => c.row));
+    const maxRow = Math.max(...coords.map(c => c.row));
+    const minCol = Math.min(...coords.map(c => c.col));
+    const maxCol = Math.max(...coords.map(c => c.col));
+    
+    const top_left = `${minRow}-${minCol}`;
+    const bottom_right = `${maxRow}-${maxCol}`;
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('create-slot-hold', {
+        body: { top_left, bottom_right, slot_ids: slots }
+      });
+      
+      if (error) {
+        if (error.code === 'SLOT_TAKEN') {
+          toast({
+            title: "Slots no longer available",
+            description: "Some slots were just taken. Please reselect.",
+            variant: "destructive",
+          });
+          setSelectedSlots(new Set());
+          return;
+        }
+        throw error;
+      }
+      
+      // Store hold info and proceed to upload
+      sessionStorage.setItem('currentHold', JSON.stringify(data));
+      setShowUserUpload(true);
+      
+    } catch (error) {
+      console.error('Error creating slot hold:', error);
+      toast({
+        title: "Error",
+        description: "Failed to reserve slots. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleCloseVideoViewer = () => {

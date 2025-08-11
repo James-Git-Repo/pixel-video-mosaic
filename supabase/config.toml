@@ -1,1 +1,31 @@
 project_id = "awgqhfaojevudjkhfibw"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+
+[db.pooler]
+enabled = false
+port = 54329
+pool_mode = "transaction"
+default_pool_size = 20
+max_client_conn = 100
+
+# Edge Functions
+[functions.create-slot-hold]
+verify_jwt = true
+
+[functions.release-expired-holds]
+verify_jwt = false
+
+# Cron job to release expired holds every minute
+[[cron]]
+name = "release-expired-holds"
+schedule = "* * * * *"
+function = "release-expired-holds"

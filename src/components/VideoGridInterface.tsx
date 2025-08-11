@@ -193,12 +193,13 @@ const VideoGridInterface: React.FC = () => {
     const bottom_right = `${maxRow}-${maxCol}`;
     
     try {
-      const { data, error } = await supabase.functions.invoke('create-slot-hold', {
+      // Step 1: Create slot hold
+      const { data: holdData, error: holdError } = await supabase.functions.invoke('create-slot-hold', {
         body: { top_left, bottom_right, slot_ids: slots }
       });
       
-      if (error) {
-        if (error.code === 'SLOT_TAKEN') {
+      if (holdError) {
+        if (holdError.code === 'SLOT_TAKEN') {
           toast({
             title: "Slots no longer available",
             description: "Some slots were just taken. Please reselect.",
@@ -207,18 +208,29 @@ const VideoGridInterface: React.FC = () => {
           setSelectedSlots(new Set());
           return;
         }
-        throw error;
+        throw holdError;
       }
       
-      // Store hold info and proceed to upload
-      sessionStorage.setItem('currentHold', JSON.stringify(data));
-      setShowUserUpload(true);
+      // Step 2: Create Stripe checkout
+      const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke('create-checkout', {
+        body: { hold_id: holdData.hold_id }
+      });
+      
+      if (checkoutError) {
+        throw checkoutError;
+      }
+      
+      // Redirect to Stripe checkout
+      window.open(checkoutData.url, '_blank');
+      
+      // Clear selection
+      setSelectedSlots(new Set());
       
     } catch (error) {
-      console.error('Error creating slot hold:', error);
+      console.error('Error in purchase flow:', error);
       toast({
         title: "Error",
-        description: "Failed to reserve slots. Please try again.",
+        description: "Failed to start checkout. Please try again.",
         variant: "destructive",
       });
     }

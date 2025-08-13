@@ -43,18 +43,12 @@ const VideoSlot: React.FC<VideoSlotProps> = ({
   };
 
   const handleDoubleClick = () => {
-    // Double click behavior
-    if (isAdmin) return;
-    
-    if (video || hasVideo) {
-      // Double click opens the video for customers
-      if (clickTimeoutRef.current) {
-        window.clearTimeout(clickTimeoutRef.current);
-        clickTimeoutRef.current = null;
-      }
-      onVideoView(slotId, video || '');
-    } else {
-      // Double click on empty slot shows tooltip
+    if (onDoubleClick) {
+      onDoubleClick(slotId);
+    } else if (!isAdmin && hasVideo && video) {
+      onVideoView(slotId, video);
+    } else if (!isAdmin && !hasVideo && !isOccupied) {
+      // Show tooltip for empty slot
       setShowEmptyTooltip(true);
       setTimeout(() => setShowEmptyTooltip(false), 2000);
     }

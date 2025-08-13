@@ -80,19 +80,32 @@ const UserUploadPopup: React.FC<UserUploadPopupProps> = ({
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file && file.type.startsWith('video/')) {
-      if (file.size > 100 * 1024 * 1024) { // 100MB limit
-        toast({
-          title: "File too large",
-          description: "Video file must be under 100MB",
-          variant: "destructive",
-        });
-        return;
-      }
-      setUploadedVideo(file);
-      const videoUrl = URL.createObjectURL(file);
-      setUploadedVideoUrl(videoUrl);
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ['video/mp4', 'video/mov', 'video/webm'];
+    if (!allowedTypes.includes(file.type)) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload .mp4, .mov, or .webm files only",
+        variant: "destructive",
+      });
+      return;
     }
+
+    // Validate file size (250MB)
+    if (file.size > 250 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Video file must be under 250MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploadedVideo(file);
+    const videoUrl = URL.createObjectURL(file);
+    setUploadedVideoUrl(videoUrl);
   };
 
   const handleSubmit = async () => {
@@ -244,7 +257,7 @@ const UserUploadPopup: React.FC<UserUploadPopupProps> = ({
 
           {/* Video Upload */}
           <div className="space-y-4">
-            <label className="text-sm font-medium">Upload Video (Max 100MB)</label>
+            <label className="text-sm font-medium">Upload Video (.mp4, .mov, .webm • Max 250MB)</label>
             <div 
               onClick={handleFileSelect}
               className="border-2 border-dashed border-primary rounded-lg p-8 text-center cursor-pointer transition-colors hover:border-primary/80 hover:bg-primary/5"
@@ -273,7 +286,7 @@ const UserUploadPopup: React.FC<UserUploadPopupProps> = ({
           <input
             ref={fileInputRef}
             type="file"
-            accept="video/*"
+            accept=".mp4,.mov,.webm"
             onChange={handleFileChange}
             className="hidden"
           />

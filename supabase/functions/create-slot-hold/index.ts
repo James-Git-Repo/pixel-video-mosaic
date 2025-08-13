@@ -81,102 +81,27 @@ serve(async (req) => {
       }
     }
 
-    // Check for conflicts in a transaction
-    const { data: conflicts, error: conflictError } = await supabaseClient.rpc('check_slot_conflicts', {
-      slot_ids_input: expectedSlotIds
+    // Use the atomic function for slot reservation
+    const { data: result, error: atomicError } = await supabaseClient.rpc('create_slot_hold_atomic', {
+      p_user_id: userData.user.id,
+      p_top_left: top_left,
+      p_bottom_right: bottom_right,
+      p_slot_ids: expectedSlotIds,
+      p_expires_minutes: 15
     });
 
-    if (conflictError) {
-      // If RPC doesn't exist, do manual checks
-      console.log("RPC not found, doing manual conflict check");
-      
-      // Check occupied slots
-      const { data: occupiedConflicts } = await supabaseClient
-        .from('occupied_slot_items')
-        .select('slot_id')
-        .in('slot_id', expectedSlotIds);
-
-      // Check admin videos
-      const { data: adminConflicts } = await supabaseClient
-        .from('admin_video_items')
-        .select('slot_id')
-        .in('slot_id', expectedSlotIds);
-
-      // Check active holds
-      const { data: holdConflicts } = await supabaseClient
-        .from('slot_hold_items')
-        .select('slot_id, slot_holds!inner(expires_at)')
-        .in('slot_id', expectedSlotIds)
-        .gt('slot_holds.expires_at', new Date().toISOString());
-
-      if ((occupiedConflicts && occupiedConflicts.length > 0) ||
-          (adminConflicts && adminConflicts.length > 0) ||
-          (holdConflicts && holdConflicts.length > 0)) {
+    if (atomicError) {
+      if (atomicError.message?.includes('slot_taken')) {
         return new Response(JSON.stringify({ 
-          code: 'SLOT_TAKEN',
-          error: "Some slots are already taken or held"
-        }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 409,
-        });
-      }
-    } else if (conflicts && conflicts.length > 0) {
-      return new Response(JSON.stringify({ 
-        code: 'SLOT_TAKEN',
-        error: "Some slots are already taken or held"
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 409,
-      });
-    }
-
-    // Create hold in transaction
-    const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString(); // 15 minutes
-
-    const { data: holdData, error: holdError } = await supabaseClient
-      .from('slot_holds')
-      .insert({
-        user_id: userData.user.id,
-        top_left,
-        bottom_right,
-        expires_at: expiresAt
-      })
-      .select('id')
-      .single();
-
-    if (holdError) {
-      console.error('Error creating hold:', holdError);
-      return new Response(JSON.stringify({ error: "Failed to create hold" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 500,
-      });
-    }
-
-    // Insert hold items
-    const holdItems = expectedSlotIds.map(slot_id => ({
-      hold_id: holdData.id,
-      slot_id
-    }));
-
-    const { error: itemsError } = await supabaseClient
-      .from('slot_hold_items')
-      .insert(holdItems);
-
-    if (itemsError) {
-      console.error('Error creating hold items:', itemsError);
-      // Clean up the hold if items failed
-      await supabaseClient.from('slot_holds').delete().eq('id', holdData.id);
-      
-      if (itemsError.code === '23505') { // Unique violation
-        return new Response(JSON.stringify({ 
-          code: 'SLOT_TAKEN',
-          error: "Slots were taken during hold creation"
+          error: "Some slots are no longer available", 
+          code: 'SLOT_TAKEN' 
         }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
           status: 409,
         });
       }
       
+      console.error('Atomic function error:', atomicError);
       return new Response(JSON.stringify({ error: "Failed to reserve slots" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 500,
@@ -184,11 +109,13 @@ serve(async (req) => {
     }
 
     return new Response(JSON.stringify({
-      hold_id: holdData.id,
+      hold_id: result[0].hold_id,
       slot_count: expectedSlotIds.length,
       top_left,
       bottom_right,
-      expires_at: expiresAt
+      expires_at: result[0].expires_at,
+      width: c2 - c1 + 1,
+      height: r2 - r1 + 1
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,

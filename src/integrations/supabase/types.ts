@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "13.0.4"
@@ -137,13 +137,6 @@ export type Database = {
           video_url?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "occupied_slots_submission_id_fkey"
-            columns: ["submission_id"]
-            isOneToOne: false
-            referencedRelation: "admin_video_submissions"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "occupied_slots_submission_id_fkey"
             columns: ["submission_id"]
@@ -289,40 +282,20 @@ export type Database = {
       }
     }
     Views: {
-      admin_video_submissions: {
-        Row: {
-          amount_cents: number | null
-          approved_at: string | null
-          bottom_right: string | null
-          created_at: string | null
-          currency: string | null
-          duration_seconds: number | null
-          email: string | null
-          height: number | null
-          id: string | null
-          payment_intent_id: string | null
-          poster_url: string | null
-          rejected_at: string | null
-          slot_count: number | null
-          status: string | null
-          top_left: string | null
-          width: number | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       create_slot_hold_atomic: {
         Args: {
-          p_user_id: string
-          p_top_left: string
           p_bottom_right: string
-          p_slot_ids: string[]
           p_expires_minutes?: number
+          p_slot_ids: string[]
+          p_top_left: string
+          p_user_id: string
         }
         Returns: {
-          hold_id: string
           expires_at: string
+          hold_id: string
         }[]
       }
       free_occupied_slots: {

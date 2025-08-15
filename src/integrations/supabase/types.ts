@@ -141,6 +141,13 @@ export type Database = {
             foreignKeyName: "occupied_slots_submission_id_fkey"
             columns: ["submission_id"]
             isOneToOne: false
+            referencedRelation: "admin_video_submissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "occupied_slots_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
             referencedRelation: "video_submissions"
             referencedColumns: ["id"]
           },
@@ -282,7 +289,27 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      admin_video_submissions: {
+        Row: {
+          amount_cents: number | null
+          approved_at: string | null
+          bottom_right: string | null
+          created_at: string | null
+          currency: string | null
+          duration_seconds: number | null
+          email: string | null
+          height: number | null
+          id: string | null
+          payment_intent_id: string | null
+          poster_url: string | null
+          rejected_at: string | null
+          slot_count: number | null
+          status: string | null
+          top_left: string | null
+          width: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       create_slot_hold_atomic: {

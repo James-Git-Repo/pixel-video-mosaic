@@ -28,12 +28,23 @@ const UploadPage: React.FC = () => {
   const fetchSubmissionFromSession = async () => {
     try {
       // Get submission details from Stripe session
-      const stripe = new (window as any).Stripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
       const { data, error } = await supabase.functions.invoke('get-submission-from-session', {
         body: { sessionId }
       });
 
       if (error) throw error;
+      
+      // Check if submission is paid and ready for upload
+      if (data.submission.status !== 'paid' || data.submission.video_asset_id) {
+        toast({
+          title: "Invalid submission state",
+          description: "This submission is not ready for upload",
+          variant: "destructive",
+        });
+        navigate('/');
+        return;
+      }
+      
       setSubmission(data.submission);
     } catch (error) {
       console.error('Error fetching submission:', error);
@@ -89,16 +100,17 @@ const UploadPage: React.FC = () => {
       const duration = videoRef.current.duration;
       setVideoDuration(duration);
       
-      const maxDuration = calculateMaxDuration(submission.slots.length);
-      setDurationValid(duration <= maxDuration);
+              const slotCount = submission.slots ? submission.slots.length : submission.slot_count || 1;
+              const maxDuration = calculateMaxDuration(slotCount);
+              setDurationValid(duration <= maxDuration);
 
-      if (duration > maxDuration) {
-        toast({
-          title: "Video too long",
-          description: `Video must be ${maxDuration} seconds or less for ${submission.slots.length} slots`,
-          variant: "destructive",
-        });
-      }
+              if (duration > maxDuration) {
+                toast({
+                  title: "Video too long",
+                  description: `Video must be ${maxDuration} seconds or less for ${slotCount} slot${slotCount !== 1 ? 's' : ''}`,
+                  variant: "destructive",
+                });
+              }
 
       // Generate poster at 1s mark
       generatePoster();
@@ -140,45 +152,54 @@ const UploadPage: React.FC = () => {
     setIsUploading(true);
 
     try {
-      // Upload video to Supabase Storage
-      const fileName = `submission_${submission.id}_${Date.now()}_${uploadedVideo.name}`;
+      // Get current user
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to upload videos",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Get file extension
+      const fileExtension = uploadedVideo.name.split('.').pop()?.toLowerCase() || 'mp4';
+      
+      // Upload video to private videos bucket with structured path
+      const videoPath = `${user.id}/original/${submission.id}.${fileExtension}`;
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('user-videos')
-        .upload(fileName, uploadedVideo);
+        .from('videos')
+        .upload(videoPath, uploadedVideo);
 
       if (uploadError) throw uploadError;
-
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('user-videos')
-        .getPublicUrl(fileName);
 
       // Upload poster if available
       let posterUrl = null;
       if (poster) {
         const posterBlob = await fetch(poster).then(r => r.blob());
-        const posterFileName = `poster_${submission.id}_${Date.now()}.jpg`;
+        const posterPath = `${user.id}/posters/${submission.id}.jpg`;
         const { data: posterUploadData, error: posterUploadError } = await supabase.storage
-          .from('user-videos')
-          .upload(posterFileName, posterBlob);
+          .from('videos')
+          .upload(posterPath, posterBlob);
 
         if (!posterUploadError) {
           const { data: { publicUrl: posterPublicUrl } } = supabase.storage
-            .from('user-videos')
-            .getPublicUrl(posterFileName);
+            .from('videos')
+            .getPublicUrl(posterPath);
           posterUrl = posterPublicUrl;
         }
       }
 
-      // Update submission with video details
+      // Update submission with video details and status
       const { error: updateError } = await supabase
         .from('video_submissions')
         .update({
-          video_url: publicUrl,
-          video_filename: fileName,
+          video_filename: videoPath,
           poster_url: posterUrl,
           duration_seconds: Math.round(videoDuration),
-          status: 'under_review'
+          status: 'under_review',
+          video_asset_id: submission.id // Mark as having uploaded content
         })
         .eq('id', submission.id);
 
@@ -214,7 +235,8 @@ const UploadPage: React.FC = () => {
     );
   }
 
-  const maxDuration = calculateMaxDuration(submission.slots.length);
+  const slotCount = submission.slots ? submission.slots.length : submission.slot_count || 1;
+  const maxDuration = calculateMaxDuration(slotCount);
 
   return (
     <div className="min-h-screen bg-background p-4">
@@ -236,20 +258,20 @@ const UploadPage: React.FC = () => {
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <div className="text-muted-foreground">Slots</div>
-                <div className="font-medium">{submission.slots.length}</div>
+                <div className="font-medium">{slotCount}</div>
               </div>
               <div>
                 <div className="text-muted-foreground">Max Duration</div>
                 <div className="font-medium">{maxDuration}s</div>
               </div>
-              <div>
-                <div className="text-muted-foreground">Amount Paid</div>
-                <div className="font-medium">${(submission.amount_cents / 100).toFixed(2)} USD</div>
-              </div>
-              <div>
-                <div className="text-muted-foreground">Status</div>
-                <div className="font-medium">Awaiting Upload</div>
-              </div>
+                <div>
+                  <div className="text-muted-foreground">Amount Paid</div>
+                  <div className="font-medium">${(submission.amount_cents / 100).toFixed(2)} {submission.currency}</div>
+                </div>
+                <div>
+                  <div className="text-muted-foreground">Status</div>
+                  <div className="font-medium">Awaiting Upload</div>
+                </div>
             </div>
           </div>
 
@@ -331,7 +353,7 @@ const UploadPage: React.FC = () => {
                   <ul className="text-blue-700 space-y-1">
                     <li>• File format: .mp4, .mov, or .webm only</li>
                     <li>• File size: Maximum 250MB</li>
-                    <li>• Duration: Maximum {maxDuration} seconds for {submission.slots.length} slot{submission.slots.length !== 1 ? 's' : ''}</li>
+                    <li>• Duration: Maximum {maxDuration} seconds for {slotCount} slot{slotCount !== 1 ? 's' : ''}</li>
                     <li>• Content: Must be AI-generated</li>
                   </ul>
                 </div>

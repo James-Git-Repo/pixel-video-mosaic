@@ -49,14 +49,14 @@ const PaymentSuccess: React.FC = () => {
             <CheckCircle className="w-12 h-12 mx-auto text-green-500" />
             <h2 className="text-xl font-bold text-green-600">Payment Successful!</h2>
             <div className="space-y-2 text-muted-foreground">
-              <p>Your video submission is now under review.</p>
-              <p>You'll receive an email notification once your video is approved and goes live.</p>
+              <p>Your payment has been confirmed.</p>
+              <p>You can now upload your video for review.</p>
             </div>
             <a 
-              href="/"
+              href={`/upload?session_id=${sessionId}`}
               className="inline-block mt-6 px-6 py-2 bg-primary hover:bg-primary/80 text-primary-foreground rounded-lg transition-colors"
             >
-              Return to Homepage
+              Upload Video
             </a>
           </div>
         ) : (

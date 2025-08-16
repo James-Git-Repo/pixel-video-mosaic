@@ -15,6 +15,7 @@ const UploadPage: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [durationValid, setDurationValid] = useState(false);
   const [videoDuration, setVideoDuration] = useState<number>(0);
+  const [policyAgreed, setPolicyAgreed] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const { toast } = useToast();
@@ -140,10 +141,10 @@ const UploadPage: React.FC = () => {
   };
 
   const handleSubmit = async () => {
-    if (!uploadedVideo || !submission || !durationValid) {
+    if (!uploadedVideo || !submission || !durationValid || !policyAgreed) {
       toast({
         title: "Cannot upload",
-        description: "Please select a valid video file",
+        description: "Please select a valid video file and agree to the policies",
         variant: "destructive",
       });
       return;
@@ -275,7 +276,30 @@ const UploadPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Upload Section */}
+            {/* Policy Agreement */}
+            <div className="bg-muted/50 border border-border rounded-lg p-4 mb-6">
+              <div className="flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  id="policyAgree"
+                  checked={policyAgreed}
+                  onChange={(e) => setPolicyAgreed(e.target.checked)}
+                  className="mt-1"
+                />
+                <label htmlFor="policyAgree" className="text-sm">
+                  I confirm that my content is AI-generated and I agree to the{' '}
+                  <a href="/content-policy" target="_blank" className="text-primary hover:underline">
+                    Content Policy
+                  </a>,{' '}
+                  <a href="/terms" target="_blank" className="text-primary hover:underline">
+                    Terms & Conditions
+                  </a>, and{' '}
+                  <a href="/refund-policy" target="_blank" className="text-primary hover:underline">
+                    Refund Policy
+                  </a>.
+                </label>
+              </div>
+            </div>
           <div className="space-y-6">
             <div>
               <label className="text-sm font-medium mb-2 block">
@@ -363,7 +387,7 @@ const UploadPage: React.FC = () => {
             {/* Submit Button */}
             <button
               onClick={handleSubmit}
-              disabled={!uploadedVideo || !durationValid || isUploading}
+              disabled={!uploadedVideo || !durationValid || isUploading || !policyAgreed}
               className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary hover:bg-primary/80 text-primary-foreground rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isUploading ? (

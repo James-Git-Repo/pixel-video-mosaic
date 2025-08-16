@@ -1,11 +1,16 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import Stripe from "https://esm.sh/stripe@14.21.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") ?? "", {
+  apiVersion: "2023-10-16",
+});
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -13,7 +18,7 @@ serve(async (req) => {
   }
 
   try {
-    const { submissionId, action, adminNotes } = await req.json();
+    const { action, submission_id, reason } = await req.json();
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -23,81 +28,132 @@ serve(async (req) => {
 
     // Get submission details
     const { data: submission, error: fetchError } = await supabase
-      .from('video_submissions')
+      .from('admin_video_submissions')
       .select('*')
-      .eq('id', submissionId)
+      .eq('id', submission_id)
       .single();
 
-    if (fetchError) throw fetchError;
+    if (fetchError || !submission) {
+      return new Response(JSON.stringify({ error: "Submission not found" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 404,
+      });
+    }
 
     if (action === 'approve') {
+      // Insert into occupied_slots and occupied_slot_items
+      const { data: occupiedSlot, error: occupiedError } = await supabase
+        .from('occupied_slots')
+        .insert({
+          submission_id: submission_id,
+          slot_id: submission.top_left,
+          video_url: submission.poster_url,
+          top_left: submission.top_left,
+          bottom_right: submission.bottom_right,
+          video_asset_id: submission.poster_url
+        })
+        .select('id')
+        .single();
+
+      if (occupiedError) throw occupiedError;
+
+      // Generate slot IDs and insert into occupied_slot_items
+      const slotItems = [];
+      const [startRow, startCol] = submission.top_left.split('-').map(Number);
+      const [endRow, endCol] = submission.bottom_right.split('-').map(Number);
+      
+      for (let row = startRow; row <= endRow; row++) {
+        for (let col = startCol; col <= endCol; col++) {
+          slotItems.push({
+            occupied_id: occupiedSlot.id,
+            slot_id: `${row}-${col}`
+          });
+        }
+      }
+
+      const { error: itemsError } = await supabase
+        .from('occupied_slot_items')
+        .insert(slotItems);
+
+      if (itemsError) throw itemsError;
+
       // Update submission status
       const { error: updateError } = await supabase
         .from('video_submissions')
         .update({
           status: 'approved',
           approved_at: new Date().toISOString(),
-          admin_notes: adminNotes
+          admin_notes: reason
         })
-        .eq('id', submissionId);
+        .eq('id', submission_id);
 
       if (updateError) throw updateError;
 
-      // Add slots to occupied_slots table
-      const occupiedSlotsData = submission.slots.map((slotId: string) => ({
-        slot_id: slotId,
-        video_url: submission.video_url,
-        submission_id: submissionId
-      }));
-
-      const { error: slotsError } = await supabase
-        .from('occupied_slots')
-        .insert(occupiedSlotsData);
-
-      if (slotsError) throw slotsError;
-
       // Send approval email
-      await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-notification`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`
-        },
-        body: JSON.stringify({
+      await supabase.functions.invoke('send-notification', {
+        body: {
           email: submission.email,
           type: 'approved',
-          slots: submission.slots,
-          adminNotes: adminNotes
-        })
+          slots: [`${submission.top_left} to ${submission.bottom_right}`],
+          adminNotes: reason
+        }
       });
 
     } else if (action === 'reject') {
+      // Stripe refund
+      if (submission.payment_intent_id) {
+        await stripe.refunds.create({ 
+          payment_intent: submission.payment_intent_id 
+        });
+      }
+
+      // Remove storage asset if exists
+      if (submission.poster_url) {
+        const fileName = submission.poster_url.split('/').pop();
+        if (fileName) {
+          await supabase.storage
+            .from('videos')
+            .remove([fileName]);
+        }
+      }
+
       // Update submission status
       const { error: updateError } = await supabase
         .from('video_submissions')
         .update({
           status: 'rejected',
           rejected_at: new Date().toISOString(),
-          admin_notes: adminNotes
+          admin_notes: reason
         })
-        .eq('id', submissionId);
+        .eq('id', submission_id);
 
       if (updateError) throw updateError;
 
       // Send rejection email
-      await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-notification`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`
-        },
-        body: JSON.stringify({
+      await supabase.functions.invoke('send-notification', {
+        body: {
           email: submission.email,
           type: 'rejected',
-          slots: submission.slots,
-          adminNotes: adminNotes
-        })
+          slots: [`${submission.top_left} to ${submission.bottom_right}`],
+          adminNotes: reason
+        }
       });
+
+    } else if (action === 'remove') {
+      // Remove occupied slots using the helper function
+      await supabase.rpc('free_occupied_slots', { submission_id });
+
+      // Update submission status
+      const { error: updateError } = await supabase
+        .from('video_submissions')
+        .update({
+          status: 'rejected',
+          rejected_at: new Date().toISOString(),
+          admin_notes: reason || 'Removed by admin'
+        })
+        .eq('id', submission_id);
+
+      if (updateError) throw updateError;
     }
 
     return new Response(JSON.stringify({ success: true }), {

@@ -7,13 +7,17 @@ interface WelcomeVideoModalProps {
   welcomeVideo?: string;
   isAdmin: boolean;
   onVideoUpload: (file: File) => void;
+  alwaysShow?: boolean;
+  onToggleAlwaysShow?: () => void;
 }
 
 const WelcomeVideoModal: React.FC<WelcomeVideoModalProps> = ({ 
   onClose, 
   welcomeVideo, 
   isAdmin, 
-  onVideoUpload 
+  onVideoUpload,
+  alwaysShow = false,
+  onToggleAlwaysShow
 }) => {
   const handleVideoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -34,6 +38,20 @@ const WelcomeVideoModal: React.FC<WelcomeVideoModalProps> = ({
             <X className="w-5 h-5" />
           </button>
         </div>
+
+        {onToggleAlwaysShow && (
+          <div className="mb-4 flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              id="alwaysShow"
+              checked={alwaysShow}
+              onChange={onToggleAlwaysShow}
+            />
+            <label htmlFor="alwaysShow" className="text-muted-foreground">
+              Always show welcome video
+            </label>
+          </div>
+        )}
 
         <div className="space-y-6">
           {welcomeVideo ? (

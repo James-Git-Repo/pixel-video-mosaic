@@ -1,8 +1,8 @@
 
-import VideoGridInterface from '@/components/VideoGridInterface';
+import VideoGridWithRealtime from '@/components/VideoGridWithRealtime';
 
 const Index = () => {
-  return <VideoGridInterface />;
+  return <VideoGridWithRealtime />;
 };
 
 export default Index;

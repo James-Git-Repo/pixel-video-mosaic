@@ -4,15 +4,23 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Json } from '@/integrations/supabase/types';
 
-interface Submission {
+interface AdminVideoSubmission {
   id: string;
   email: string;
-  slots: string[];
-  amount_paid: number;
-  video_url: string;
-  video_filename: string;
+  top_left: string;
+  bottom_right: string;
+  width: number;
+  height: number;
+  slot_count: number;
+  amount_cents: number;
+  currency: string;
   status: string;
+  duration_seconds: number;
+  poster_url: string;
+  payment_intent_id: string;
   created_at: string;
+  approved_at?: string;
+  rejected_at?: string;
   admin_notes?: string;
 }
 
@@ -21,9 +29,9 @@ interface AdminPanelProps {
 }
 
 const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
-  const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [submissions, setSubmissions] = useState<AdminVideoSubmission[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
+  const [selectedSubmission, setSelectedSubmission] = useState<AdminVideoSubmission | null>(null);
   const [adminNotes, setAdminNotes] = useState('');
   const [processing, setProcessing] = useState(false);
   const { toast } = useToast();
@@ -35,19 +43,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
   const loadSubmissions = async () => {
     try {
       const { data, error } = await supabase
-        .from('video_submissions')
+        .from('admin_video_submissions')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       
-      // Transform the data to match our interface, converting Json to string[]
-      const transformedData = (data || []).map(item => ({
-        ...item,
-        slots: Array.isArray(item.slots) ? item.slots as string[] : []
-      }));
-      
-      setSubmissions(transformedData);
+      setSubmissions(data || []);
     } catch (error) {
       console.error('Error loading submissions:', error);
       toast({
@@ -60,11 +62,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
     }
   };
 
-  const handleSubmissionAction = async (submissionId: string, action: 'approve' | 'reject') => {
-    if (!adminNotes.trim() && action === 'reject') {
+  const handleSubmissionAction = async (submissionId: string, action: 'approve' | 'reject' | 'remove') => {
+    if (!adminNotes.trim() && (action === 'reject' || action === 'remove')) {
       toast({
         title: "Admin notes required",
-        description: "Please provide a reason for rejection",
+        description: `Please provide a reason for ${action}ion`,
         variant: "destructive",
       });
       return;
@@ -74,9 +76,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
     try {
       const { error } = await supabase.functions.invoke('admin-manage-submission', {
         body: {
-          submissionId,
           action,
-          adminNotes: adminNotes.trim()
+          submission_id: submissionId,
+          reason: adminNotes.trim()
         }
       });
 
@@ -84,7 +86,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
 
       toast({
         title: `Submission ${action}d`,
-        description: `The video submission has been ${action}d and the user has been notified.`,
+        description: `The video submission has been ${action}d${action !== 'remove' ? ' and the user has been notified' : ''}.`,
       });
 
       setSelectedSubmission(null);
@@ -179,11 +181,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                       <div className="text-sm">
                         <div className="font-medium">{submission.email}</div>
                         <div className="text-muted-foreground">
-                          {submission.slots.length} slot{submission.slots.length > 1 ? 's' : ''} • 
-                          ${(submission.amount_paid / 100).toFixed(2)}
+                          {submission.slot_count} slot{submission.slot_count > 1 ? 's' : ''} • 
+                          ${(submission.amount_cents / 100).toFixed(2)} {submission.currency}
                         </div>
                         <div className="text-xs text-muted-foreground mt-1">
-                          Slots: {submission.slots.join(', ')}
+                          {submission.width}×{submission.height} ({submission.top_left} to {submission.bottom_right})
                         </div>
                       </div>
                     </div>
@@ -206,13 +208,22 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                   </div>
 
                   <div>
-                    <label className="text-sm font-medium">Slots ({selectedSubmission.slots.length})</label>
-                    <div className="text-sm text-muted-foreground">{selectedSubmission.slots.join(', ')}</div>
+                    <label className="text-sm font-medium">Area ({selectedSubmission.slot_count} slots)</label>
+                    <div className="text-sm text-muted-foreground">
+                      {selectedSubmission.width}×{selectedSubmission.height} ({selectedSubmission.top_left} to {selectedSubmission.bottom_right})
+                    </div>
                   </div>
 
                   <div>
                     <label className="text-sm font-medium">Amount Paid</label>
-                    <div className="text-sm text-muted-foreground">${(selectedSubmission.amount_paid / 100).toFixed(2)}</div>
+                    <div className="text-sm text-muted-foreground">
+                      ${(selectedSubmission.amount_cents / 100).toFixed(2)} {selectedSubmission.currency}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium">Duration</label>
+                    <div className="text-sm text-muted-foreground">{selectedSubmission.duration_seconds}s</div>
                   </div>
 
                   <div>
@@ -239,15 +250,14 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                     </div>
                   )}
 
-                  {selectedSubmission.video_url && (
+                  {selectedSubmission.poster_url && (
                     <div>
                       <label className="text-sm font-medium">Video Preview</label>
                       <div className="border border-border rounded-lg overflow-hidden mt-2">
-                        <video
+                        <img
                           className="w-full aspect-video object-cover"
-                          src={selectedSubmission.video_url}
-                          controls
-                          muted
+                          src={selectedSubmission.poster_url}
+                          alt="Video poster"
                         />
                       </div>
                     </div>
@@ -281,7 +291,15 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                           className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50"
                         >
                           <X className="w-4 h-4" />
-                          {processing ? 'Processing...' : 'Reject'}
+                          {processing ? 'Processing...' : 'Reject & Refund'}
+                        </button>
+                        <button
+                          onClick={() => handleSubmissionAction(selectedSubmission.id, 'remove')}
+                          disabled={processing}
+                          className="flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors disabled:opacity-50"
+                        >
+                          <X className="w-4 h-4" />
+                          {processing ? 'Processing...' : 'Remove'}
                         </button>
                       </div>
                     </div>

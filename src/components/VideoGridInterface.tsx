@@ -7,7 +7,9 @@ import VideoViewer from './VideoViewer';
 import WelcomeVideoModal from './WelcomeVideoModal';
 import UserUploadPopup from './UserUploadPopup';
 import AdminPanel from './AdminPanel';
-import { Film, Layers, Zap, Settings, LogOut, Eye, Upload, ShoppingCart, Users, X, Sparkles } from 'lucide-react';
+import NavigationDrawer from './NavigationDrawer';
+import { Film, Layers, Zap, Settings, LogOut, Eye, Upload, ShoppingCart, Users, X, Sparkles, Menu } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { useAdminMode } from '../hooks/useAdminMode';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -26,6 +28,7 @@ const VideoGridInterface: React.FC = () => {
   const [occupiedSlots, setOccupiedSlots] = useState<Set<string>>(new Set());
   const [welcomeVideo, setWelcomeVideo] = useState<string | null>(null);
   const [selectedSlots, setSelectedSlots] = useState<Set<string>>(new Set());
+  const [isNavOpen, setIsNavOpen] = useState(false);
   const { toast } = useToast();
 
   // Load occupied slots and videos on component mount
@@ -242,160 +245,135 @@ const VideoGridInterface: React.FC = () => {
   };
 
   return (
-    <div className="w-full h-screen bg-background text-foreground flex flex-col">
-      {/* Main Title */}
-      <div className="bg-card border-b border-border px-6 py-6">
-        <h1 className="text-4xl font-bold text-center sparkle-text">
-          The Million Slots AI Billboard
-        </h1>
-        <p className="text-center text-muted-foreground mt-2">
-          1,000,000 video slots • Interactive digital canvas • Click any video to view
-        </p>
-      </div>
+    <div className="w-full h-screen bg-background text-foreground flex flex-col font-futura">
+      {/* Header */}
+      <header className="header-gradient px-6 py-6 relative">
+        <div className="flex items-center justify-between">
+          {/* Hamburger Menu */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsNavOpen(true)}
+            className="text-foreground hover:bg-primary/20 glow-hover"
+          >
+            <Menu className="w-6 h-6" />
+          </Button>
 
-      {/* Admin Header - Only show if admin */}
+          {/* Title */}
+          <div className="text-center flex-1 mx-8">
+            <h1 className="text-4xl font-cyber font-black neon-text">
+              The Million Slots AI Billboard
+            </h1>
+            <p className="text-sm text-muted-foreground mt-2 font-futura">
+              1,000,000 video slots • Interactive digital canvas • AI-generated content only
+            </p>
+          </div>
+
+          {/* Floating Buy Button (for non-admin) */}
+          {!isAdmin && (
+            <Button
+              onClick={handlePurchaseSelected}
+              disabled={selectedSlots.size === 0}
+              className="cyber-bg text-background font-cyber font-bold px-6 py-3 glow-hover disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ShoppingCart className="w-5 h-5 mr-2" />
+              Buy {selectedSlots.size || ''} Slot{selectedSlots.size !== 1 ? 's' : ''}
+            </Button>
+          )}
+        </div>
+      </header>
+
+      {/* Admin Control Bar - Only show if admin */}
       {isAdmin && (
-        <header className="bg-card border-b border-border px-6 py-4">
+        <div className="bg-card/50 backdrop-blur-sm border-b border-primary/20 px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 sparkle-bg rounded-lg">
+              <div className="p-2 neon-bg rounded-lg">
                 <Film className="w-6 h-6 text-background" />
               </div>
               <div>
-                <h2 className="text-xl font-bold">Admin Control Panel</h2>
-                <p className="text-sm text-muted-foreground">Upload and manage video content</p>
+                <h2 className="text-xl font-cyber font-bold text-foreground">Admin Control Panel</h2>
+                <p className="text-sm text-muted-foreground font-futura">Upload and manage video content</p>
               </div>
             </div>
             
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-4 text-sm">
-                <div className="flex items-center gap-2">
-                  <Layers className="w-4 h-4 text-accent" />
-                  <span>Interactive Mosaic</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Zap className="w-4 h-4 text-secondary" />
-                  <span>Multi-Slot Upload</span>
-                </div>
-              </div>
-              
-              <button
+            <div className="flex items-center gap-3">
+              <Button
                 onClick={() => setShowAdminPanel(true)}
-                className="flex items-center gap-2 px-3 py-2 bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-lg transition-colors"
+                className="bg-secondary hover:bg-secondary/80 text-secondary-foreground font-futura glow-hover"
               >
-                <Users className="w-4 h-4" />
+                <Users className="w-4 h-4 mr-2" />
                 Manage Submissions
-              </button>
+              </Button>
               
-              <button
+              <Button
                 onClick={() => setShowUploadPopup(true)}
-                className="flex items-center gap-2 px-3 py-2 sparkle-bg text-background rounded-lg hover:opacity-90 transition-opacity"
+                className="neon-bg text-background font-futura glow-hover"
               >
-                <Upload className="w-4 h-4" />
+                <Upload className="w-4 h-4 mr-2" />
                 Upload Video
-              </button>
-              
-              <button
-                onClick={handleAdminAccess}
-                className="flex items-center gap-2 px-3 py-2 bg-destructive hover:bg-destructive/80 text-destructive-foreground rounded-lg transition-colors"
-              >
-                <LogOut className="w-4 h-4" />
-                Exit Admin
-              </button>
+              </Button>
             </div>
           </div>
-        </header>
+        </div>
       )}
 
       {/* Instructions */}
-      <div className="bg-gradient-to-r from-primary/10 to-secondary/10 border-b border-primary/20 px-6 py-4">
+      <div className="bg-gradient-to-r from-primary/10 via-secondary/10 to-accent/10 border-b border-primary/20 px-6 py-4">
         <div className="text-center space-y-2">
-          <p className="text-sm text-foreground">
+          <p className="text-sm text-foreground font-futura">
             {isAdmin 
               ? "Upload videos to single or multiple slots simultaneously. Duration auto-adjusts: 15s base + 5s per additional slot (max 2.5 minutes)."
               : "Drag to select rectangular areas. Double-click videos to view or empty slots for info. Each slot costs $0.50 USD."
             }
           </p>
-          <div className="flex items-center justify-center gap-2 text-primary font-semibold">
+          <div className="flex items-center justify-center gap-2 text-primary font-semibold animate-glow-pulse">
             <Sparkles className="w-4 h-4" />
-            <span className="text-sm">All content must be AI-generated!</span>
+            <span className="text-sm font-cyber">All content must be AI-generated!</span>
             <Sparkles className="w-4 h-4" />
           </div>
         </div>
       </div>
 
-      {/* Controls for non-admin users */}
-      {!isAdmin && (
-        <div className="absolute top-4 right-4 z-20 flex gap-2">
-          <button
-            onClick={handlePurchaseSelected}
-            disabled={selectedSlots.size === 0}
-            className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/80 text-primary-foreground rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
-          >
-            <ShoppingCart className="w-4 h-4" />
-            Buy {selectedSlots.size} Slot{selectedSlots.size !== 1 ? 's' : ''} (${(selectedSlots.size * 0.50).toFixed(2)})
-          </button>
-          {selectedSlots.size > 0 && (
-            <button
-              onClick={() => setSelectedSlots(new Set())}
-              className="flex items-center gap-2 px-3 py-2 bg-muted hover:bg-muted/80 text-muted-foreground border border-border rounded-lg transition-colors"
-            >
-              <X className="w-4 h-4" />
-              Clear
-            </button>
-          )}
-          <button
-            onClick={() => setShowUserUpload(true)}
-            className="flex items-center gap-2 px-3 py-2 bg-card hover:bg-muted border border-border rounded-lg transition-colors"
-          >
-            <Upload className="w-4 h-4" />
-            Manual Entry
-          </button>
-          <button
-            onClick={() => setShowSlotSelector(true)}
-            className="flex items-center gap-2 px-3 py-2 bg-card hover:bg-muted border border-border rounded-lg transition-colors"
-          >
-            <Eye className="w-4 h-4" />
-            Search Slot
-          </button>
-          <button
-            onClick={handleAdminAccess}
-            className="flex items-center gap-2 px-3 py-2 bg-card hover:bg-muted border border-border rounded-lg transition-colors"
-          >
-            <Settings className="w-4 h-4" />
-            Admin
-          </button>
-        </div>
-      )}
 
       {/* Selection Summary Panel */}
       {selectedSlots.size > 0 && !isAdmin && (
-        <div className="absolute top-20 right-4 z-20 bg-card border border-border rounded-lg p-4 shadow-lg min-w-[280px]">
+        <div className="absolute top-32 right-4 z-20 bg-card/90 backdrop-blur-sm border border-primary/30 rounded-lg p-4 shadow-lg min-w-[280px] glow-hover">
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-primary rounded-full"></div>
-              <h3 className="font-semibold text-foreground">Selection Summary</h3>
+              <div className="w-3 h-3 bg-primary rounded-full animate-glow-pulse"></div>
+              <h3 className="font-cyber font-semibold text-foreground">Selection Summary</h3>
             </div>
             
-            <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="grid grid-cols-2 gap-4 text-sm font-futura">
               <div>
                 <div className="text-muted-foreground">Dimensions</div>
-                <div className="font-medium">{getSelectionDimensions().width}×{getSelectionDimensions().height}</div>
+                <div className="font-medium text-accent">{getSelectionDimensions().width}×{getSelectionDimensions().height}</div>
               </div>
               <div>
                 <div className="text-muted-foreground">Total Slots</div>
-                <div className="font-medium">{selectedSlots.size}</div>
+                <div className="font-medium text-secondary">{selectedSlots.size}</div>
               </div>
             </div>
             
-            <div className="pt-2 border-t border-border">
+            <div className="pt-2 border-t border-primary/20">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Total Price</span>
-                <span className="text-lg font-bold text-primary">${(selectedSlots.size * 0.50).toFixed(2)} USD</span>
+                <span className="text-sm text-muted-foreground font-futura">Total Price</span>
+                <span className="text-lg font-cyber font-bold text-primary">${(selectedSlots.size * 0.50).toFixed(2)} USD</span>
               </div>
-              <div className="text-xs text-muted-foreground mt-1">
+              <div className="text-xs text-muted-foreground mt-1 font-futura">
                 $0.50 per slot
               </div>
+              
+              <Button
+                onClick={() => setSelectedSlots(new Set())}
+                variant="ghost"
+                size="sm"
+                className="w-full mt-3 text-muted-foreground hover:text-foreground font-futura"
+              >
+                <X className="w-4 h-4 mr-2" />
+                Clear Selection
+              </Button>
             </div>
           </div>
         </div>
@@ -412,6 +390,26 @@ const VideoGridInterface: React.FC = () => {
           onSelectionChange={handleSelectionChange}
         />
       </main>
+
+      {/* Navigation Drawer */}
+      <NavigationDrawer
+        isOpen={isNavOpen}
+        onClose={() => setIsNavOpen(false)}
+        onBuySlots={handlePurchaseSelected}
+        onManualEntry={() => {
+          setShowUserUpload(true);
+          setIsNavOpen(false);
+        }}
+        onSearchSlot={() => {
+          setShowSlotSelector(true);
+          setIsNavOpen(false);
+        }}
+        onAdminAccess={() => {
+          handleAdminAccess();
+          setIsNavOpen(false);
+        }}
+        selectedSlots={selectedSlots}
+      />
 
       {/* Modals */}
       {showAdminLogin && (

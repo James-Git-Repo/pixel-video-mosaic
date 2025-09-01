@@ -22,8 +22,8 @@ const RefundPolicy: React.FC = () => {
             <h1 className="text-3xl font-bold">Refund Policy</h1>
           </div>
 
-          <div className="prose prose-gray dark:prose-invert max-w-none">
-            <p className="text-lg mb-6">
+          <div className="prose prose-gray dark:prose-invert max-w-none text-card-foreground">
+            <p className="text-lg mb-6 text-card-foreground">
               We strive to provide a fair and transparent refund policy for The Million Slots AI Billboard. 
               This policy outlines when refunds are available and how to request them.
             </p>
@@ -148,7 +148,7 @@ const RefundPolicy: React.FC = () => {
                   <li className="flex items-start gap-3">
                     <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold mt-0.5">1</div>
                     <div>
-                      <strong>Contact Support:</strong> Email refunds@millionslotsai.com with your payment details
+                      <strong>Contact Support:</strong> Email admin@millionslotsai.com with your payment details
                     </div>
                   </li>
                   <li className="flex items-start gap-3">
@@ -178,8 +178,8 @@ const RefundPolicy: React.FC = () => {
               <p className="text-sm mb-3">
                 If you have questions about refunds or encounter any issues, our support team is here to help.
               </p>
-              <div className="space-y-1 text-sm">
-                <p><strong>Email:</strong> refunds@millionslotsai.com</p>
+              <div className="space-y-1 text-sm text-muted-foreground">
+                <p><strong>Email:</strong> admin@millionslotsai.com</p>
                 <p><strong>Response Time:</strong> Within 24 hours</p>
                 <p><strong>Available:</strong> Monday-Friday, 9 AM - 6 PM EST</p>
               </div>

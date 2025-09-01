@@ -22,8 +22,8 @@ const ContentPolicy: React.FC = () => {
             <h1 className="text-3xl font-bold">Content Policy</h1>
           </div>
 
-          <div className="prose prose-gray dark:prose-invert max-w-none">
-            <p className="text-lg mb-6">
+          <div className="prose prose-gray dark:prose-invert max-w-none text-card-foreground">
+            <p className="text-lg mb-6 text-card-foreground">
               The Million Slots AI Billboard requires all content to be AI-generated. This policy ensures 
               ethical, legal, and appropriate content for our digital canvas.
             </p>
@@ -117,9 +117,9 @@ const ContentPolicy: React.FC = () => {
             </section>
 
             <div className="bg-primary/10 border border-primary/20 rounded-lg p-6">
-              <h3 className="font-semibold mb-2">Questions about Content Policy?</h3>
-              <p className="text-sm">
-                Contact our team at policy@millionslotsai.com for clarification on acceptable content 
+              <h3 className="font-semibold mb-2 text-card-foreground">Questions about Content Policy?</h3>
+              <p className="text-sm text-card-foreground">
+                Contact our team at admin@millionslotsai.com for clarification on acceptable content 
                 or to report policy violations.
               </p>
             </div>

@@ -22,7 +22,7 @@ const Terms: React.FC = () => {
             <h1 className="text-3xl font-bold">Terms & Conditions</h1>
           </div>
 
-          <div className="prose prose-gray dark:prose-invert max-w-none">
+          <div className="prose prose-gray dark:prose-invert max-w-none text-card-foreground">
             <p className="text-sm text-muted-foreground mb-6">
               Last updated: {new Date().toLocaleDateString()}
             </p>
@@ -143,9 +143,9 @@ const Terms: React.FC = () => {
             </section>
 
             <div className="bg-primary/10 border border-primary/20 rounded-lg p-6">
-              <h3 className="font-semibold mb-2">Contact Information</h3>
-              <p className="text-sm">
-                For questions about these Terms & Conditions, contact us at legal@millionslotsai.com
+              <h3 className="font-semibold mb-2 text-card-foreground">Contact Information</h3>
+              <p className="text-sm text-card-foreground">
+                For questions about these Terms & Conditions, contact us at admin@millionslotsai.com
               </p>
             </div>
           </div>

@@ -274,10 +274,13 @@ const VideoGridInterface: React.FC = () => {
             <Button
               onClick={handlePurchaseSelected}
               disabled={selectedSlots.size === 0}
-              className="cyber-bg text-background font-cyber font-bold px-6 py-3 glow-hover disabled:opacity-50 disabled:cursor-not-allowed"
+              className="cyber-bg text-background font-cyber font-bold px-6 py-3 glow-hover disabled:opacity-30 disabled:cursor-not-allowed shadow-xl border border-neon-cyan/30 relative overflow-hidden group"
             >
+              <div className="absolute inset-0 bg-gradient-to-r from-neon-pink to-neon-blue opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
               <ShoppingCart className="w-5 h-5 mr-2" />
-              Buy {selectedSlots.size || ''} Slot{selectedSlots.size !== 1 ? 's' : ''}
+              <span className="relative z-10">
+                Buy {selectedSlots.size || ''} Slot{selectedSlots.size !== 1 ? 's' : ''}
+              </span>
             </Button>
           )}
         </div>

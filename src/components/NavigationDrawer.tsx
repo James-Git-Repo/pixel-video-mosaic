@@ -118,16 +118,28 @@ const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
             <Button
               onClick={onBuySlots}
               disabled={selectedSlots.size === 0}
-              className="w-full h-14 neon-bg text-background font-cyber font-bold text-lg glow-hover disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full h-16 neon-bg text-background font-cyber font-bold text-xl glow-hover disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden group"
             >
+              <div className="absolute inset-0 bg-gradient-to-r from-neon-pink to-neon-blue opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
               <ShoppingCart className="w-6 h-6 mr-3" />
-              Buy {selectedSlots.size} Slot{selectedSlots.size !== 1 ? 's' : ''} 
-              {selectedSlots.size > 0 && ` ($${(selectedSlots.size * 0.50).toFixed(2)})`}
+              <div className="flex flex-col items-start">
+                <span>Buy {selectedSlots.size} Slot{selectedSlots.size !== 1 ? 's' : ''}</span>
+                {selectedSlots.size > 0 && (
+                  <span className="text-sm font-futura opacity-90">
+                    ${(selectedSlots.size * 0.50).toFixed(2)} USD
+                  </span>
+                )}
+              </div>
             </Button>
             {selectedSlots.size === 0 && (
-              <p className="text-xs text-sidebar-foreground/60 mt-2 text-center font-futura">
-                Select slots on the grid to enable purchase
-              </p>
+              <div className="mt-3 p-3 bg-sidebar-accent/10 rounded-lg border border-sidebar-accent/20">
+                <p className="text-xs text-sidebar-foreground/70 text-center font-futura">
+                  💡 Select rectangular areas on the grid to purchase video slots
+                </p>
+                <p className="text-xs text-sidebar-accent text-center font-futura mt-1">
+                  $0.50 per slot • AI content only
+                </p>
+              </div>
             )}
           </div>
         )}

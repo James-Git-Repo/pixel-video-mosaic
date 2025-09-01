@@ -56,8 +56,8 @@ const Terms: React.FC = () => {
                 3. Display Duration & Slot Management
               </h2>
               <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                <p className="mb-4"><strong>Video Duration Limits:</strong></p>
-                <ul className="space-y-1">
+                <p className="mb-4 text-gray-800 dark:text-gray-200"><strong>Video Duration Limits:</strong></p>
+                <ul className="space-y-1 text-gray-800 dark:text-gray-200">
                   <li>• Base duration: 15 seconds for single slot</li>
                   <li>• Additional time: +5 seconds per additional slot</li>
                   <li>• Maximum duration: 150 seconds (2.5 minutes)</li>
@@ -85,11 +85,11 @@ const Terms: React.FC = () => {
               <div className="space-y-4">
                 <div className="border-l-4 border-green-500 pl-4">
                   <h3 className="font-semibold text-green-700 dark:text-green-400">Approval</h3>
-                  <p className="text-sm">Content meeting our guidelines will be approved and displayed on the billboard.</p>
+                  <p className="text-sm text-gray-700 dark:text-gray-300">Content meeting our guidelines will be approved and displayed on the billboard.</p>
                 </div>
                 <div className="border-l-4 border-red-500 pl-4">
                   <h3 className="font-semibold text-red-700 dark:text-red-400">Rejection</h3>
-                  <p className="text-sm">Content violating our policies will be rejected with a full refund via the original payment method.</p>
+                  <p className="text-sm text-gray-700 dark:text-gray-300">Content violating our policies will be rejected with a full refund via the original payment method.</p>
                 </div>
               </div>
             </section>

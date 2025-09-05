@@ -97,6 +97,138 @@ const ChangePassword: React.FC = () => {
 };
 /** --- end Change Password widget --- */
 
+/** --- Payouts widget (admin-only) --- */
+const PayoutsCard: React.FC = () => {
+  const [balance, setBalance] = useState<any>(null);
+  const [payoutAmount, setPayoutAmount] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [payoutLoading, setPayoutLoading] = useState(false);
+  const { toast } = useToast();
+
+  const refreshBalance = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-cashout', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'balance' })
+      });
+      
+      if (error) throw error;
+      setBalance(data);
+    } catch (error: any) {
+      toast({
+        title: 'Error fetching balance',
+        description: error.message || 'Could not retrieve Stripe balance',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePayout = async () => {
+    const amountCents = Math.round(parseFloat(payoutAmount) * 100);
+    if (!amountCents || amountCents <= 0) {
+      toast({
+        title: 'Invalid amount',
+        description: 'Please enter a valid dollar amount',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    const availableUsd = balance?.available?.find((b: any) => b.currency === 'usd')?.amount || 0;
+    if (amountCents > availableUsd) {
+      toast({
+        title: 'Insufficient funds',
+        description: `Available: $${(availableUsd / 100).toFixed(2)}`,
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setPayoutLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-cashout', {
+        body: { amount_cents: amountCents, currency: 'usd' }
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: 'Payout created',
+        description: `$${payoutAmount} payout initiated (ID: ${data.payout_id})`
+      });
+      
+      setPayoutAmount('');
+      await refreshBalance();
+    } catch (error: any) {
+      toast({
+        title: 'Payout failed',
+        description: error.message || 'Could not create payout',
+        variant: 'destructive'
+      });
+    } finally {
+      setPayoutLoading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <h3 className="font-medium">Stripe Payouts</h3>
+      <div className="grid gap-4 sm:grid-cols-[1fr,auto] items-start">
+        <div className="space-y-3">
+          <button
+            onClick={refreshBalance}
+            disabled={loading}
+            className="px-3 py-2 bg-primary text-primary-foreground rounded text-sm disabled:opacity-60"
+          >
+            {loading ? 'Loading...' : 'Refresh Balance'}
+          </button>
+          
+          {balance && (
+            <div className="text-sm space-y-1">
+              <div>
+                <strong>Available:</strong> {balance.available?.map((b: any) => 
+                  `$${(b.amount / 100).toFixed(2)} ${b.currency.toUpperCase()}`
+                ).join(', ') || 'None'}
+              </div>
+              <div>
+                <strong>Pending:</strong> {balance.pending?.map((b: any) => 
+                  `$${(b.amount / 100).toFixed(2)} ${b.currency.toUpperCase()}`
+                ).join(', ') || 'None'}
+              </div>
+            </div>
+          )}
+        </div>
+        
+        <div className="flex gap-2 items-end">
+          <div>
+            <label className="text-sm font-medium">Amount (USD)</label>
+            <input
+              type="number"
+              step="0.01"
+              value={payoutAmount}
+              onChange={(e) => setPayoutAmount(e.target.value)}
+              placeholder="0.00"
+              className="mt-1 w-24 rounded border border-border bg-input p-2 text-sm"
+            />
+          </div>
+          <button
+            onClick={handlePayout}
+            disabled={payoutLoading || !balance}
+            className="h-[38px] rounded bg-green-600 px-4 text-white text-sm disabled:opacity-60"
+          >
+            {payoutLoading ? 'Processing...' : 'Payout Now'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+/** --- end Payouts widget --- */
+
 const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
   const [submissions, setSubmissions] = useState<AdminVideoSubmission[]>([]);
   const [loading, setLoading] = useState(true);
@@ -225,6 +357,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
         <div className="p-4 border-b border-border bg-muted/40">
           <h3 className="font-medium mb-2">Account Security</h3>
           <ChangePassword />
+        </div>
+
+        {/* Payouts Section */}
+        <div className="p-4 border-b border-border bg-muted/40">
+          <PayoutsCard />
         </div>
 
         <div className="flex-1 flex overflow-hidden">

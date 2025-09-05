@@ -66,10 +66,10 @@ const ContentPolicy: React.FC = () => {
                 Content Verification
               </h2>
               <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-                <p className="mb-4 text-gray-800 dark:text-gray-200">
+                <p className="mb-4 text-slate-800 dark:text-slate-200">
                   All uploaded content undergoes review to ensure compliance with our AI-only policy:
                 </p>
-                <ul className="space-y-2 text-gray-800 dark:text-gray-200">
+                <ul className="space-y-2 text-slate-800 dark:text-slate-200">
                   <li>• Manual review by our moderation team</li>
                   <li>• AI detection tools to verify content origin</li>
                   <li>• Community reporting system</li>

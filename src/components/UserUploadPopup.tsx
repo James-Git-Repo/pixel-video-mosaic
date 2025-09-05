@@ -21,6 +21,7 @@ const UserUploadPopup: React.FC<UserUploadPopupProps> = ({
   const [uploadedVideoUrl, setUploadedVideoUrl] = useState<string | null>(null);
   const [currentSlotInput, setCurrentSlotInput] = useState('');
   const [email, setEmail] = useState('');
+  const [promoCode, setPromoCode] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -71,6 +72,10 @@ const UserUploadPopup: React.FC<UserUploadPopupProps> = ({
   };
 
   const calculateTotal = () => {
+    // If valid promo code, make it free
+    if (promoCode.trim() === "xfgkqwhe9pèàlDòIJ2+QR0EI2") {
+      return 0;
+    }
     return selectedSlots.length * 0.50; // $0.50 USD per slot
   };
 
@@ -119,59 +124,60 @@ const UserUploadPopup: React.FC<UserUploadPopupProps> = ({
     }
 
     setIsProcessing(true);
+    const isPromoCodeValid = promoCode.trim() === "xfgkqwhe9pèàlDòIJ2+QR0EI2";
 
     try {
-      // Upload video to Supabase Storage
-      const fileName = `user_${Date.now()}_${uploadedVideo.name}`;
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('user-videos')
-        .upload(fileName, uploadedVideo);
-
-      if (uploadError) throw uploadError;
-
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('user-videos')
-        .getPublicUrl(fileName);
-
-      // Create submission record
-      const { data: submission, error: submissionError } = await supabase
-        .from('video_submissions')
-        .insert({
-          email: email,
-          slots: selectedSlots,
-          amount_paid: calculateTotal() * 100, // Convert to cents
-          payment_intent_id: `pending_${Date.now()}`, // Temporary - will be updated with actual Stripe payment
-          video_url: publicUrl,
-          video_filename: fileName,
-          status: 'pending_payment'
-        })
-        .select()
-        .single();
-
-      if (submissionError) throw submissionError;
-
-      // Create Stripe checkout session
-      const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke('create-checkout', {
+      // First create a slot hold
+      const { data: holdData, error: holdError } = await supabase.functions.invoke('create-slot-hold', {
         body: {
           slots: selectedSlots,
+          expires_minutes: 15
+        }
+      });
+
+      if (holdError) throw holdError;
+
+      // Check if using promo code for free checkout
+      if (isPromoCodeValid) {
+        const { data: freeData, error: freeError } = await supabase.functions.invoke('free-checkout', {
+          body: {
+            email: email,
+            hold_id: holdData.hold_id,
+            promo_code: promoCode.trim()
+          }
+        });
+
+        if (freeError) throw freeError;
+
+        toast({
+          title: "Free submission created!",
+          description: "Your submission is now under review. You'll receive an email update soon.",
+        });
+
+        // Navigate to upload page with submission info
+        window.location.href = `/upload?free_checkout=true&submission_id=${freeData.submission_id}`;
+        return;
+      }
+
+      // Regular paid checkout via Stripe
+      const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke('create-checkout', {
+        body: {
+          hold_id: holdData.hold_id,
           email: email,
-          videoUrl: publicUrl,
-          videoFilename: fileName,
-          submissionId: submission.id
+          slot_count: selectedSlots.length
         }
       });
 
       if (checkoutError) throw checkoutError;
 
-      // Redirect to Stripe checkout
-      window.location.href = checkoutData.url;
+      // Open Stripe checkout in new tab (as requested)
+      window.open(checkoutData.url, '_blank');
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating submission:', error);
       toast({
         title: "Submission failed",
-        description: "There was an error creating your submission",
+        description: error.message || "There was an error creating your submission",
         variant: "destructive",
       });
     } finally {
@@ -207,12 +213,24 @@ const UserUploadPopup: React.FC<UserUploadPopupProps> = ({
             />
           </div>
 
+          {/* Promo Code Input */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Have a promo code?</label>
+            <input
+              type="text"
+              value={promoCode}
+              onChange={(e) => setPromoCode(e.target.value)}
+              placeholder="Enter promo code"
+              className="w-full px-3 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          </div>
+
           {/* Slot Selection */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium">Select Video Slots ($0.50 USD each)</label>
               <div className="text-sm text-muted-foreground">
-                Total: ${calculateTotal().toFixed(2)} USD
+                Total: {calculateTotal() === 0 ? 'FREE' : `$${calculateTotal().toFixed(2)} USD`}
               </div>
             </div>
             
@@ -237,7 +255,9 @@ const UserUploadPopup: React.FC<UserUploadPopupProps> = ({
 
             {selectedSlots.length > 0 && (
               <div className="bg-muted rounded-lg p-4">
-                <h4 className="font-medium mb-2">Selected Slots ({selectedSlots.length}) - ${calculateTotal().toFixed(2)}</h4>
+                <h4 className="font-medium mb-2">
+                  Selected Slots ({selectedSlots.length}) - {calculateTotal() === 0 ? 'FREE with promo code!' : `$${calculateTotal().toFixed(2)}`}
+                </h4>
                 <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
                   {selectedSlots.map((slotId) => (
                     <div key={slotId} className="flex items-center gap-2 bg-accent/20 px-2 py-1 rounded">
@@ -314,7 +334,9 @@ const UserUploadPopup: React.FC<UserUploadPopupProps> = ({
             className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary hover:bg-primary/80 text-primary-foreground rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <CreditCard className="w-4 h-4" />
-            {isProcessing ? 'Processing...' : `Pay $${calculateTotal().toFixed(2)} with Stripe`}
+            {isProcessing ? 'Processing...' : 
+             calculateTotal() === 0 ? 'Submit Free with Promo Code' : 
+             `Pay $${calculateTotal().toFixed(2)} with Stripe`}
           </button>
         </div>
       </div>

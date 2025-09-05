@@ -2,11 +2,52 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { Resend } from "npm:resend@4.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, stripe-signature",
 };
+
+const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+
+// Send thank-you email after successful payment
+async function sendThankYouEmail(email: string, amountCents: number, slotCount: number, topLeft: string, bottomRight: string) {
+  if (!Deno.env.get("RESEND_API_KEY")) {
+    console.log("RESEND_API_KEY not configured, skipping email");
+    return;
+  }
+
+  try {
+    await resend.emails.send({
+      from: "admin@millionslotsai.com",
+      to: [email],
+      subject: "Thanks! We received your submission—now under review",
+      html: `
+        <h1>Thank you for your submission!</h1>
+        <p>We've successfully received your payment and your content is now queued for review.</p>
+        
+        <h2>Submission Details:</h2>
+        <ul>
+          <li><strong>Amount Paid:</strong> $${(amountCents / 100).toFixed(2)} USD</li>
+          <li><strong>Slots Reserved:</strong> ${slotCount} slot${slotCount > 1 ? 's' : ''}</li>
+          <li><strong>Area:</strong> ${topLeft} to ${bottomRight}</li>
+        </ul>
+
+        <h2>What happens next?</h2>
+        <p>Our team will review your submission within <strong>24-48 hours</strong>. You'll receive another email once your content is approved and live on the billboard.</p>
+
+        <p>Need help? Contact us at <a href="mailto:admin@millionslotsai.com">admin@millionslotsai.com</a></p>
+        
+        <p>Best regards,<br>The Million Slots AI Team</p>
+      `,
+    });
+    console.log(`Thank-you email sent to ${email}`);
+  } catch (error) {
+    console.error("Email send failed:", error);
+    throw error;
+  }
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -115,7 +156,7 @@ serve(async (req) => {
             amount_cents: actualSlotCount * 50,
             currency: 'USD',
             payment_intent_id: session.payment_intent,
-            status: 'paid'
+            status: 'under_review'
           })
           .select()
           .single();
@@ -123,6 +164,14 @@ serve(async (req) => {
         if (submissionError) {
           console.error('Failed to create submission:', submissionError);
           return new Response(null, { status: 500 });
+        }
+
+        // Send thank-you email
+        try {
+          await sendThankYouEmail(submission.email, actualSlotCount * 50, actualSlotCount, hold.top_left, hold.bottom_right);
+        } catch (emailError) {
+          console.error('Failed to send thank-you email:', emailError);
+          // Don't fail the payment if email fails
         }
 
         // Delete hold atomically (items first, then hold)

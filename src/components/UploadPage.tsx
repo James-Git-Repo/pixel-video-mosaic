@@ -16,6 +16,7 @@ const UploadPage: React.FC = () => {
   const [durationValid, setDurationValid] = useState(false);
   const [videoDuration, setVideoDuration] = useState<number>(0);
   const [policyAgreed, setPolicyAgreed] = useState(false);
+  const [promoCode, setPromoCode] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const { toast } = useToast();
@@ -276,7 +277,19 @@ const UploadPage: React.FC = () => {
             </div>
           </div>
 
-            {/* Policy Agreement */}
+          {/* Promo Code Input */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Have a promo code?</label>
+            <input
+              type="text"
+              value={promoCode}
+              onChange={(e) => setPromoCode(e.target.value)}
+              placeholder="Enter promo code"
+              className="w-full px-3 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          </div>
+
+          {/* Policy Agreement */}
             <div className="bg-muted/50 border border-border rounded-lg p-4 mb-6">
               <div className="flex items-start gap-3">
                 <input

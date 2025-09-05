@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 // ⬇️ Adjust this import to match your project.
 // Try this first:
-import { supabase } from "../lib/supabaseClient";
+import { supabase } from "../integrations/supabase/client";
 // If your client is at src/supabaseClient.ts, use:
 // import { supabase } from "../supabaseClient";
 

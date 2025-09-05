@@ -34,14 +34,14 @@ const RefundPolicy: React.FC = () => {
                 Automatic Refunds
               </h2>
               <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-                <p className="mb-4 text-gray-800 dark:text-gray-200"><strong>You will receive an automatic full refund if:</strong></p>
-                <ul className="space-y-2 text-gray-800 dark:text-gray-200">
+                <p className="mb-4 text-slate-800 dark:text-slate-200"><strong>You will receive an automatic full refund if:</strong></p>
+                <ul className="space-y-2 text-slate-800 dark:text-slate-200">
                   <li>✅ Your content is rejected for policy violations</li>
                   <li>✅ Technical issues prevent your content upload</li>
                   <li>✅ System errors occur during the payment process</li>
                   <li>✅ Content fails our AI-verification process</li>
                 </ul>
-                <p className="mt-4 text-sm text-gray-800 dark:text-gray-200">
+                <p className="mt-4 text-sm text-slate-800 dark:text-slate-200">
                   <strong>Processing time:</strong> 5-10 business days to your original payment method
                 </p>
               </div>
@@ -53,8 +53,8 @@ const RefundPolicy: React.FC = () => {
                 No Refunds Available
               </h2>
               <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-                <p className="mb-4 text-gray-800 dark:text-gray-200"><strong>Refunds are not available for:</strong></p>
-                <ul className="space-y-2 text-gray-800 dark:text-gray-200">
+                <p className="mb-4 text-slate-800 dark:text-slate-200"><strong>Refunds are not available for:</strong></p>
+                <ul className="space-y-2 text-slate-800 dark:text-slate-200">
                   <li>❌ Content that has been successfully uploaded and displayed</li>
                   <li>❌ Change of mind after upload completion</li>
                   <li>❌ Content that has completed its display cycle</li>
@@ -71,32 +71,32 @@ const RefundPolicy: React.FC = () => {
               </h2>
               <div className="grid md:grid-cols-2 gap-4">
                   <div className="border border-border rounded-lg p-4">
-                    <h3 className="font-semibold mb-2 flex items-center gap-2 text-gray-800 dark:text-gray-200">
+                    <h3 className="font-semibold mb-2 flex items-center gap-2 text-slate-800 dark:text-slate-200">
                       <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
                       Content Review
                     </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">24-48 hours after upload</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">24-48 hours after upload</p>
                   </div>
                   <div className="border border-border rounded-lg p-4">
-                    <h3 className="font-semibold mb-2 flex items-center gap-2 text-gray-800 dark:text-gray-200">
+                    <h3 className="font-semibold mb-2 flex items-center gap-2 text-slate-800 dark:text-slate-200">
                       <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                       Refund Processing
                     </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">5-10 business days</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">5-10 business days</p>
                   </div>
                   <div className="border border-border rounded-lg p-4">
-                    <h3 className="font-semibold mb-2 flex items-center gap-2 text-gray-800 dark:text-gray-200">
+                    <h3 className="font-semibold mb-2 flex items-center gap-2 text-slate-800 dark:text-slate-200">
                       <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
                       Bank Processing
                     </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">1-3 additional business days</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">1-3 additional business days</p>
                   </div>
                   <div className="border border-border rounded-lg p-4">
-                    <h3 className="font-semibold mb-2 flex items-center gap-2 text-gray-800 dark:text-gray-200">
+                    <h3 className="font-semibold mb-2 flex items-center gap-2 text-slate-800 dark:text-slate-200">
                       <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
                       Dispute Resolution
                     </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Up to 14 business days</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">Up to 14 business days</p>
                   </div>
               </div>
             </section>
@@ -118,22 +118,22 @@ const RefundPolicy: React.FC = () => {
               </h2>
               <div className="space-y-4">
                 <div className="border-l-4 border-yellow-500 pl-4">
-                  <h3 className="font-semibold text-gray-800 dark:text-gray-200">Content Removal</h3>
-                  <p className="text-sm text-gray-700 dark:text-gray-300">
+                  <h3 className="font-semibold text-slate-800 dark:text-slate-200">Content Removal</h3>
+                  <p className="text-sm text-slate-700 dark:text-slate-300">
                     If approved content is later removed for policy violations discovered post-approval, 
                     refunds will be considered on a case-by-case basis.
                   </p>
                 </div>
                 <div className="border-l-4 border-blue-500 pl-4">
-                  <h3 className="font-semibold text-gray-800 dark:text-gray-200">Platform Issues</h3>
-                  <p className="text-sm text-gray-700 dark:text-gray-300">
+                  <h3 className="font-semibold text-slate-800 dark:text-slate-200">Platform Issues</h3>
+                  <p className="text-sm text-slate-700 dark:text-slate-300">
                     If technical issues prevent proper display of your approved content, we may offer 
                     partial refunds or display extensions.
                   </p>
                 </div>
                 <div className="border-l-4 border-purple-500 pl-4">
-                  <h3 className="font-semibold text-gray-800 dark:text-gray-200">Disputed Charges</h3>
-                  <p className="text-sm text-gray-700 dark:text-gray-300">
+                  <h3 className="font-semibold text-slate-800 dark:text-slate-200">Disputed Charges</h3>
+                  <p className="text-sm text-slate-700 dark:text-slate-300">
                     Initiating a chargeback instead of contacting us may result in account suspension 
                     and loss of future refund eligibility.
                   </p>

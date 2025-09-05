@@ -1,28 +1,26 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+// ⬇️ Adjust this import to match your project.
+// Try this first:
+import { supabase } from "../lib/supabaseClient";
+// If your client is at src/supabaseClient.ts, use:
+// import { supabase } from "../supabaseClient";
 
 export function useIsAdmin() {
   const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    let cancelled = false;
+    let cancel = false;
     (async () => {
       try {
-        const { data, error } = await supabase.rpc("is_admin");
-        if (cancelled) return;
-        if (error) throw error;
-        setIsAdmin(!!data);
-      } catch (e: any) {
-        setError(e?.message ?? "Admin check failed");
-        setIsAdmin(false);
+        const { data } = await supabase.rpc("is_admin");
+        if (!cancel) setIsAdmin(Boolean(data));
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancel) setLoading(false);
       }
     })();
-    return () => { cancelled = true; };
+    return () => { cancel = true; };
   }, []);
 
-  return { isAdmin, loading, error };
+  return { isAdmin, loading };
 }

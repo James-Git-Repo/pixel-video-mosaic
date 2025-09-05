@@ -1,6 +1,6 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "./components/ui/toaster";
+import { Toaster as Sonner } from "./components/ui/sonner";
+import { TooltipProvider } from "./components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
@@ -13,15 +13,13 @@ import Terms from "./pages/Terms";
 import RefundPolicy from "./pages/RefundPolicy";
 import NotFound from "./pages/NotFound";
 
-// NEW: import the guard and the panel
-import ProtectedAdminRoute from "@/routes/ProtectedAdminRoute";
-import AdminPanel from "@/components/AdminPanel";
+import ProtectedAdminRoute from "./routes/ProtectedAdminRoute";
+import AdminPanel from "./components/AdminPanel";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    {/* removed AdminModeProvider */}
     <TooltipProvider>
       <Toaster />
       <Sonner />
@@ -35,12 +33,12 @@ const App = () => (
           <Route path="/terms" element={<Terms />} />
           <Route path="/refund-policy" element={<RefundPolicy />} />
 
-          {/* NEW: protected admin route */}
+          {/* NEW: /admin route protected by the hook */}
           <Route
             path="/admin"
             element={
               <ProtectedAdminRoute>
-                <AdminPanel onClose={() => window.history.back()} />
+                <AdminPanel />
               </ProtectedAdminRoute>
             }
           />
@@ -53,4 +51,3 @@ const App = () => (
 );
 
 export default App;
-

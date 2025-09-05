@@ -40,7 +40,7 @@ const App = () => (
             path="/admin"
             element={
               <ProtectedAdminRoute>
-                <AdminPanel />
+                <AdminPanel onClose={() => window.history.back()} />
               </ProtectedAdminRoute>
             }
           />

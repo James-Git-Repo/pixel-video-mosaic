@@ -2,7 +2,7 @@
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { FixedSizeGrid as Grid } from 'react-window';
 import VideoSlot from './VideoSlot';
-import { useAdminMode } from '../hooks/useAdminMode';
+import { useIsAdmin } from '../hooks/useIsAdmin';
 
 interface VideoData {
   [slotId: string]: string;
@@ -53,7 +53,7 @@ const VideoGrid: React.FC<VideoGridProps> = ({
   });
   const [floatingPill, setFloatingPill] = useState<{x: number, y: number, slots: number} | null>(null);
   const [errorTooltip, setErrorTooltip] = useState<{x: number, y: number, message: string} | null>(null);
-  const { isAdmin } = useAdminMode();
+  const { isAdmin } = useIsAdmin();
   const gridRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 

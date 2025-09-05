@@ -10,12 +10,12 @@ import AdminPanel from './AdminPanel';
 import NavigationDrawer from './NavigationDrawer';
 import { Film, Layers, Zap, Settings, LogOut, Eye, Upload, ShoppingCart, Users, X, Sparkles, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useAdminMode } from '../hooks/useAdminMode';
+import { useIsAdmin } from '../hooks/useIsAdmin';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 const VideoGridInterface: React.FC = () => {
-  const { isAdmin, toggleAdminMode } = useAdminMode();
+  const { isAdmin } = useIsAdmin();
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [showSlotSelector, setShowSlotSelector] = useState(false);
   const [showUploadPopup, setShowUploadPopup] = useState(false);
@@ -81,15 +81,15 @@ const VideoGridInterface: React.FC = () => {
 
   const handleAdminAccess = () => {
     if (isAdmin) {
-      toggleAdminMode();
+      setShowAdminPanel(true);
     } else {
       setShowAdminLogin(true);
     }
   };
 
   const handleLogin = () => {
-    toggleAdminMode();
     setShowAdminLogin(false);
+    // Admin status will be checked via database
   };
 
   const handleVideoUpload = async (slotId: string, file: File) => {

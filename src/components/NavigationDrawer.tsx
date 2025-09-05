@@ -12,7 +12,7 @@ import {
   Menu
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useAdminMode } from '@/hooks/useAdminMode';
+import { useIsAdmin } from '@/hooks/useIsAdmin';
 
 interface NavigationDrawerProps {
   isOpen: boolean;
@@ -33,7 +33,7 @@ const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
   onAdminAccess,
   selectedSlots
 }) => {
-  const { isAdmin } = useAdminMode();
+  const { isAdmin } = useIsAdmin();
   const navigate = useNavigate();
 
   const menuItems = [

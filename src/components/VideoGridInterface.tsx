@@ -180,6 +180,17 @@ const VideoGridInterface: React.FC = () => {
   const handlePurchaseSelected = async () => {
     if (selectedSlots.size === 0) return;
     
+    // Check if user is authenticated first
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to purchase slots",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     // Create slot hold first
     const slots = Array.from(selectedSlots);
     const coords = slots.map(slot => {
@@ -202,7 +213,7 @@ const VideoGridInterface: React.FC = () => {
       });
       
       if (holdError) {
-        if (holdError.code === 'SLOT_TAKEN') {
+        if (holdError.message?.includes('SLOT_TAKEN') || holdError.message?.includes('slot_taken')) {
           toast({
             title: "Slots no longer available",
             description: "Some slots were just taken. Please reselect.",
@@ -229,11 +240,11 @@ const VideoGridInterface: React.FC = () => {
       // Clear selection
       setSelectedSlots(new Set());
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in purchase flow:', error);
       toast({
         title: "Error",
-        description: "Failed to start checkout. Please try again.",
+        description: error.message || "Failed to start checkout. Please try again.",
         variant: "destructive",
       });
     }

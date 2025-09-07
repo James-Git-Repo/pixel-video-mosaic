@@ -8,14 +8,17 @@ import WelcomeVideoModal from './WelcomeVideoModal';
 import UserUploadPopup from './UserUploadPopup';
 import AdminPanel from './AdminPanel';
 import NavigationDrawer from './NavigationDrawer';
+import CheckoutModal from './CheckoutModal';
 import { Film, Layers, Zap, Settings, LogOut, Eye, Upload, ShoppingCart, Users, X, Sparkles, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useIsAdmin } from '../hooks/useIsAdmin';
+import { useSlotSelection } from '../hooks/useSlotSelection';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 const VideoGridInterface: React.FC = () => {
   const { isAdmin } = useIsAdmin();
+  const { selectedSlots, toggleSlot, clearSelection, selectionCount } = useSlotSelection();
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [showSlotSelector, setShowSlotSelector] = useState(false);
   const [showUploadPopup, setShowUploadPopup] = useState(false);
@@ -23,11 +26,11 @@ const VideoGridInterface: React.FC = () => {
   const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [showWelcomeVideo, setShowWelcomeVideo] = useState(true);
   const [showVideoViewer, setShowVideoViewer] = useState(false);
+  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [currentViewedVideo, setCurrentViewedVideo] = useState<{slotId: string, video: string} | null>(null);
   const [videos, setVideos] = useState<{ [slotId: string]: string }>({});
   const [occupiedSlots, setOccupiedSlots] = useState<Set<string>>(new Set());
   const [welcomeVideo, setWelcomeVideo] = useState<string | null>(null);
-  const [selectedSlots, setSelectedSlots] = useState<Set<string>>(new Set());
   const [isNavOpen, setIsNavOpen] = useState(false);
   const { toast } = useToast();
 
@@ -152,8 +155,10 @@ const VideoGridInterface: React.FC = () => {
     setShowVideoViewer(true);
   };
 
-  const handleSelectionChange = (newSelection: Set<string>) => {
-    setSelectedSlots(newSelection);
+  const handleSlotClick = (slotId: string) => {
+    if (!isAdmin) {
+      toggleSlot(slotId);
+    }
   };
 
   // Calculate selection dimensions
@@ -177,77 +182,17 @@ const VideoGridInterface: React.FC = () => {
     };
   };
 
-  const handlePurchaseSelected = async () => {
+  const handlePurchaseSelected = () => {
     if (selectedSlots.size === 0) return;
-    
-    // Check if user is authenticated first
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      toast({
-        title: "Authentication required",
-        description: "Please sign in to purchase slots",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    // Create slot hold first
-    const slots = Array.from(selectedSlots);
-    const coords = slots.map(slot => {
-      const [row, col] = slot.split('-').map(Number);
-      return { row, col };
+    setShowCheckoutModal(true);
+  };
+
+  const handleCheckoutSuccess = () => {
+    clearSelection();
+    toast({
+      title: "Redirecting to checkout",
+      description: "You will be redirected to complete your purchase.",
     });
-    
-    const minRow = Math.min(...coords.map(c => c.row));
-    const maxRow = Math.max(...coords.map(c => c.row));
-    const minCol = Math.min(...coords.map(c => c.col));
-    const maxCol = Math.max(...coords.map(c => c.col));
-    
-    const top_left = `${minRow}-${minCol}`;
-    const bottom_right = `${maxRow}-${maxCol}`;
-    
-    try {
-      // Step 1: Create slot hold
-      const { data: holdData, error: holdError } = await supabase.functions.invoke('create-slot-hold', {
-        body: { top_left, bottom_right, slot_ids: slots }
-      });
-      
-      if (holdError) {
-        if (holdError.message?.includes('SLOT_TAKEN') || holdError.message?.includes('slot_taken')) {
-          toast({
-            title: "Slots no longer available",
-            description: "Some slots were just taken. Please reselect.",
-            variant: "destructive",
-          });
-          setSelectedSlots(new Set());
-          return;
-        }
-        throw holdError;
-      }
-      
-      // Step 2: Create Stripe checkout
-      const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke('create-checkout', {
-        body: { hold_id: holdData.hold_id }
-      });
-      
-      if (checkoutError) {
-        throw checkoutError;
-      }
-      
-      // Redirect to Stripe checkout
-      window.open(checkoutData.url, '_blank');
-      
-      // Clear selection
-      setSelectedSlots(new Set());
-      
-    } catch (error: any) {
-      console.error('Error in purchase flow:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to start checkout. Please try again.",
-        variant: "destructive",
-      });
-    }
   };
 
   const handleCloseVideoViewer = () => {
@@ -282,17 +227,17 @@ const VideoGridInterface: React.FC = () => {
 
           {/* Floating Buy Button (for non-admin) */}
           {!isAdmin && (
-            <Button
-              onClick={handlePurchaseSelected}
-              disabled={selectedSlots.size === 0}
-              className="cyber-bg text-background font-cyber font-bold px-6 py-3 glow-hover disabled:opacity-30 disabled:cursor-not-allowed shadow-xl border border-neon-cyan/30 relative overflow-hidden group"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-neon-pink to-neon-blue opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
-              <ShoppingCart className="w-5 h-5 mr-2" />
-              <span className="relative z-10">
-                Buy {selectedSlots.size || ''} Slot{selectedSlots.size !== 1 ? 's' : ''}
-              </span>
-            </Button>
+              <Button
+                onClick={handlePurchaseSelected}
+                disabled={selectionCount === 0}
+                className="cyber-bg text-background font-cyber font-bold px-6 py-3 glow-hover disabled:opacity-30 disabled:cursor-not-allowed shadow-xl border border-neon-cyan/30 relative overflow-hidden group"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-neon-pink to-neon-blue opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+                <ShoppingCart className="w-5 h-5 mr-2" />
+                <span className="relative z-10">
+                  Buy {selectionCount || ''} Slot{selectionCount !== 1 ? 's' : ''}
+                </span>
+              </Button>
           )}
         </div>
       </header>
@@ -351,7 +296,7 @@ const VideoGridInterface: React.FC = () => {
 
 
       {/* Selection Summary Panel */}
-      {selectedSlots.size > 0 && !isAdmin && (
+      {selectionCount > 0 && !isAdmin && (
         <div className="absolute top-32 right-4 z-20 bg-card/90 backdrop-blur-sm border border-primary/30 rounded-lg p-4 shadow-lg min-w-[280px] glow-hover">
           <div className="space-y-3">
             <div className="flex items-center gap-2">
@@ -366,21 +311,21 @@ const VideoGridInterface: React.FC = () => {
               </div>
               <div>
                 <div className="text-muted-foreground">Total Slots</div>
-                <div className="font-medium text-secondary">{selectedSlots.size}</div>
+                <div className="font-medium text-secondary">{selectionCount}</div>
               </div>
             </div>
             
             <div className="pt-2 border-t border-primary/20">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground font-futura">Total Price</span>
-                <span className="text-lg font-cyber font-bold text-primary">${(selectedSlots.size * 0.50).toFixed(2)} USD</span>
+                <span className="text-sm text-muted-foreground font-futura">Starting Price</span>
+                <span className="text-lg font-cyber font-bold text-primary">${(selectionCount * 0.50).toFixed(2)} USD</span>
               </div>
               <div className="text-xs text-muted-foreground mt-1 font-futura">
-                $0.50 per slot
+                From $0.50 per slot (1-year term)
               </div>
               
               <Button
-                onClick={() => setSelectedSlots(new Set())}
+                onClick={clearSelection}
                 variant="ghost"
                 size="sm"
                 className="w-full mt-3 text-muted-foreground hover:text-foreground font-futura"
@@ -401,7 +346,7 @@ const VideoGridInterface: React.FC = () => {
           onVideoUpload={handleVideoUpload}
           onVideoView={handleVideoView}
           selectedSlots={selectedSlots}
-          onSelectionChange={handleSelectionChange}
+          onSelectionChange={(newSelection) => {}}
         />
       </main>
 
@@ -422,7 +367,7 @@ const VideoGridInterface: React.FC = () => {
           handleAdminAccess();
           setIsNavOpen(false);
         }}
-        selectedSlots={selectedSlots}
+        selectedSlots={Array.from(selectedSlots)}
       />
 
       {/* Modals */}
@@ -448,7 +393,7 @@ const VideoGridInterface: React.FC = () => {
         <UserUploadPopup
           onClose={() => {
             setShowUserUpload(false);
-            setSelectedSlots(new Set());
+            clearSelection();
           }}
           occupiedSlots={occupiedSlots}
           onSlotsUpdated={loadOccupiedSlots}
@@ -475,6 +420,15 @@ const VideoGridInterface: React.FC = () => {
 
       {showAdminPanel && isAdmin && (
         <AdminPanel onClose={() => setShowAdminPanel(false)} />
+      )}
+
+      {showCheckoutModal && (
+        <CheckoutModal
+          isOpen={showCheckoutModal}
+          onClose={() => setShowCheckoutModal(false)}
+        selectedSlots={Array.from(selectedSlots)}
+          onCheckoutSuccess={handleCheckoutSuccess}
+        />
       )}
     </div>
   );

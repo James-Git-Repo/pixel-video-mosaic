@@ -141,17 +141,132 @@ export type Database = {
             foreignKeyName: "occupied_slots_submission_id_fkey"
             columns: ["submission_id"]
             isOneToOne: false
-            referencedRelation: "admin_video_submissions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "occupied_slots_submission_id_fkey"
-            columns: ["submission_id"]
-            isOneToOne: false
             referencedRelation: "video_submissions"
             referencedColumns: ["id"]
           },
         ]
+      }
+      order_slots: {
+        Row: {
+          order_id: string
+          slot_id: string
+        }
+        Insert: {
+          order_id: string
+          slot_id: string
+        }
+        Update: {
+          order_id?: string
+          slot_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_slots_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_slots_slot_id_fkey"
+            columns: ["slot_id"]
+            isOneToOne: false
+            referencedRelation: "slots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          id: string
+          reservation_id: string | null
+          slot_count: number
+          term: string
+          user_id: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          id?: string
+          reservation_id?: string | null
+          slot_count: number
+          term: string
+          user_id: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          id?: string
+          reservation_id?: string | null
+          slot_count?: number
+          term?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "reservations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pricing: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          description: string | null
+          key: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          description?: string | null
+          key: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          description?: string | null
+          key?: string
+        }
+        Relationships: []
+      }
+      reservations: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          expires_at: string
+          id: string
+          slot_count: number
+          status: string
+          term: string
+          user_id: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          expires_at?: string
+          id?: string
+          slot_count: number
+          status?: string
+          term: string
+          user_id: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          expires_at?: string
+          id?: string
+          slot_count?: number
+          status?: string
+          term?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       slot_hold_items: {
         Row: {
@@ -206,6 +321,51 @@ export type Database = {
           id?: string
           top_left?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      slots: {
+        Row: {
+          created_at: string
+          id: string
+          owner_id: string | null
+          reserved_by: string | null
+          reserved_expires_at: string | null
+          status: string
+          term_end: string | null
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          owner_id?: string | null
+          reserved_by?: string | null
+          reserved_expires_at?: string | null
+          status?: string
+          term_end?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          owner_id?: string | null
+          reserved_by?: string | null
+          reserved_expires_at?: string | null
+          status?: string
+          term_end?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          role: string
+          user_id: string
+        }
+        Insert: {
+          role: string
+          user_id: string
+        }
+        Update: {
+          role?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -289,29 +449,34 @@ export type Database = {
       }
     }
     Views: {
-      admin_video_submissions: {
-        Row: {
-          amount_cents: number | null
-          approved_at: string | null
-          bottom_right: string | null
-          created_at: string | null
-          currency: string | null
-          duration_seconds: number | null
-          email: string | null
-          height: number | null
-          id: string | null
-          payment_intent_id: string | null
-          poster_url: string | null
-          rejected_at: string | null
-          slot_count: number | null
-          status: string | null
-          top_left: string | null
-          width: number | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
+      admin_list_submissions: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          amount_cents: number
+          approved_at: string
+          bottom_right: string
+          created_at: string
+          currency: string
+          duration_seconds: number
+          email: string
+          height: number
+          id: string
+          payment_intent_id: string
+          poster_url: string
+          rejected_at: string
+          slot_count: number
+          status: string
+          top_left: string
+          width: number
+        }[]
+      }
+      clean_expired_reservations: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       create_slot_hold_atomic: {
         Args: {
           p_bottom_right: string
@@ -332,6 +497,10 @@ export type Database = {
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
+      }
+      purge_expired_slot_holds: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
     }
     Enums: {

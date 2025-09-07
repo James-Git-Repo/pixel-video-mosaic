@@ -7,21 +7,27 @@ import { Json } from '@/integrations/supabase/types';
 interface AdminVideoSubmission {
   id: string;
   email: string;
-  top_left: string;
-  bottom_right: string;
-  width: number;
-  height: number;
-  slot_count: number;
-  amount_cents: number;
-  currency: string;
+  top_left?: string;
+  bottom_right?: string;
+  width?: number;
+  height?: number;
+  amount_cents?: number;
+  amount_paid: number;
+  currency?: string;
   status: string;
-  duration_seconds: number;
-  poster_url: string;
+  duration_seconds?: number;
+  poster_url?: string;
   payment_intent_id: string;
   created_at: string;
   approved_at?: string;
   rejected_at?: string;
   admin_notes?: string;
+  user_id?: string;
+  video_url?: string;
+  video_filename?: string;
+  video_asset_id?: string;
+  transcoding_status?: string;
+  slots: Json;
 }
 
 interface AdminPanelProps {
@@ -245,7 +251,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
   const loadSubmissions = async () => {
     try {
       const { data, error } = await supabase
-        .from('admin_video_submissions')
+        .from('video_submissions')
         .select('*')
         .order('created_at', { ascending: false });
 
@@ -398,8 +404,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                       <div className="text-sm">
                         <div className="font-medium">{submission.email}</div>
                         <div className="text-muted-foreground">
-                          {submission.slot_count} slot{submission.slot_count > 1 ? 's' : ''} • $
-                          {(submission.amount_cents / 100).toFixed(2)} {submission.currency}
+                          {Array.isArray(submission.slots) ? submission.slots.length : 0} slot{(Array.isArray(submission.slots) ? submission.slots.length : 0) > 1 ? 's' : ''} • $
+                          {((submission.amount_cents || 0) / 100).toFixed(2)} {submission.currency || 'USD'}
                         </div>
                         <div className="text-xs text-muted-foreground mt-1">
                           {submission.width}×{submission.height} ({submission.top_left} to {submission.bottom_right})
@@ -426,7 +432,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
 
                   <div>
                     <label className="text-sm font-medium">
-                      Area ({selectedSubmission.slot_count} slots)
+                      Area ({Array.isArray(selectedSubmission.slots) ? selectedSubmission.slots.length : 0} slots)
                     </label>
                     <div className="text-sm text-muted-foreground">
                       {selectedSubmission.width}×{selectedSubmission.height} ({selectedSubmission.top_left} to{' '}

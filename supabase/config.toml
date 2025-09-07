@@ -45,8 +45,23 @@ verify_jwt = true
 [functions.release-expired-holds]
 verify_jwt = false
 
+[functions.create-checkout-session]
+verify_jwt = true
+
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.clean-expired-slots]
+verify_jwt = false
+
 # Cron job to release expired holds every minute
 [[cron]]
 name = "release-expired-holds"
 schedule = "* * * * *"
 function = "release-expired-holds"
+
+# Cron job to clean expired slot reservations every minute
+[[cron]]
+name = "clean-expired-slots"
+schedule = "* * * * *"
+function = "clean-expired-slots"

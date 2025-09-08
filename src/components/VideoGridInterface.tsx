@@ -367,7 +367,7 @@ const VideoGridInterface: React.FC = () => {
           handleAdminAccess();
           setIsNavOpen(false);
         }}
-        selectedSlots={Array.from(selectedSlots)}
+        selectedSlots={selectedSlots}
       />
 
       {/* Modals */}

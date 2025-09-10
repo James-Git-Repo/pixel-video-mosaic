@@ -346,7 +346,21 @@ const VideoGridInterface: React.FC = () => {
           onVideoUpload={handleVideoUpload}
           onVideoView={handleVideoView}
           selectedSlots={selectedSlots}
-          onSelectionChange={(newSelection) => {}}
+          onSelectionChange={(newSelection) => {
+            // Update the selection in the hook
+            for (const slotId of newSelection) {
+              if (!selectedSlots.has(slotId)) {
+                toggleSlot(slotId);
+              }
+            }
+            // Remove slots that are no longer selected
+            for (const slotId of selectedSlots) {
+              if (!newSelection.has(slotId)) {
+                toggleSlot(slotId);
+              }
+            }
+          }}
+          onSlotClick={handleSlotClick}
         />
       </main>
 

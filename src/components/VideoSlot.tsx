@@ -7,6 +7,7 @@ interface VideoSlotProps {
   onVideoUpload: (slotId: string, file: File) => void;
   onVideoView: (slotId: string, video: string) => void;
   onDoubleClick?: (slotId: string) => void;
+  onSlotClick?: (slotId: string) => void;
   video?: string;
   isAdmin: boolean;
   isOccupied: boolean;
@@ -19,6 +20,7 @@ const VideoSlot: React.FC<VideoSlotProps> = ({
   onVideoUpload, 
   onVideoView, 
   onDoubleClick,
+  onSlotClick,
   video, 
   isAdmin, 
   isOccupied, 
@@ -39,7 +41,10 @@ const VideoSlot: React.FC<VideoSlotProps> = ({
       return;
     }
 
-    // For customers, single click does nothing - selection is handled by drag
+    // For customers, allow slot selection if slot is free
+    if (!isOccupied && !hasVideo && !video && onSlotClick) {
+      onSlotClick(slotId);
+    }
   };
 
   const handleDoubleClick = () => {
@@ -77,9 +82,18 @@ const VideoSlot: React.FC<VideoSlotProps> = ({
     }
   };
 
+  const getSlotStatus = () => {
+    if (hasVideo || video) return 'sold';
+    if (isOccupied) return 'reserved';
+    return 'free';
+  };
+
   return (
     <div
       className={`relative w-[10px] h-[10px] border transition-all duration-200 ${getBorderStyle()}`}
+      data-slot-id={slotId}
+      data-status={getSlotStatus()}
+      aria-pressed={isSelected ? "true" : "false"}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleClick}

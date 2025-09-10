@@ -15,6 +15,7 @@ interface VideoGridProps {
   onVideoView: (slotId: string, video: string) => void;
   selectedSlots?: Set<string>;
   onSelectionChange?: (selectedSlots: Set<string>) => void;
+  onSlotClick?: (slotId: string) => void;
 }
 
 interface SelectionRect {
@@ -41,7 +42,8 @@ const VideoGrid: React.FC<VideoGridProps> = ({
   onVideoUpload, 
   onVideoView, 
   selectedSlots = new Set(),
-  onSelectionChange
+  onSelectionChange,
+  onSlotClick
 }) => {
   const [zoom, setZoom] = useState(1);
   const [dragState, setDragState] = useState<DragState>({
@@ -275,6 +277,7 @@ const VideoGrid: React.FC<VideoGridProps> = ({
           onVideoUpload={handleVideoUpload}
           onVideoView={handleVideoView}
           onDoubleClick={handleDoubleClick}
+          onSlotClick={onSlotClick}
           video={videos[slotId]}
           isAdmin={isAdmin}
           isOccupied={isOccupied}

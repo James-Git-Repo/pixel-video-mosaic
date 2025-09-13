@@ -20,7 +20,6 @@ interface NavigationDrawerProps {
   onBuySlots: () => void;
   onManualEntry: () => void;
   onSearchSlot: () => void;
-  onAdminAccess: () => void;
   selectedSlots: Set<string>;
 }
 
@@ -30,7 +29,6 @@ const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
   onBuySlots,
   onManualEntry,
   onSearchSlot,
-  onAdminAccess,
   selectedSlots
 }) => {
   const { isAdmin } = useIsAdmin();
@@ -52,14 +50,6 @@ const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
       description: 'Find and view specific slots',
       onClick: onSearchSlot,
       showForAdmin: false
-    },
-    {
-      id: 'admin',
-      icon: Settings,
-      label: isAdmin ? 'Exit Admin' : 'Admin',
-      description: isAdmin ? 'Leave admin mode' : 'Access admin panel',
-      onClick: onAdminAccess,
-      showForAdmin: true
     }
   ];
 

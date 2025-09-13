@@ -1,9 +1,5 @@
 import { useEffect, useState } from "react";
-// ⬇️ Adjust this import to match your project.
-// Try this first:
 import { supabase } from "../integrations/supabase/client";
-// If your client is at src/supabaseClient.ts, use:
-// import { supabase } from "../supabaseClient";
 
 export function useIsAdmin() {
   const [loading, setLoading] = useState(true);
@@ -11,15 +7,33 @@ export function useIsAdmin() {
 
   useEffect(() => {
     let cancel = false;
-    (async () => {
+
+    const checkAuth = async () => {
       try {
-        const { data } = await supabase.rpc("is_admin");
-        if (!cancel) setIsAdmin(Boolean(data));
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!cancel) {
+          // User is admin if they're authenticated with Supabase
+          setIsAdmin(!!user);
+        }
       } finally {
         if (!cancel) setLoading(false);
       }
-    })();
-    return () => { cancel = true; };
+    };
+
+    checkAuth();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!cancel) {
+        setIsAdmin(!!session?.user);
+        setLoading(false);
+      }
+    });
+
+    return () => { 
+      cancel = true;
+      subscription.unsubscribe();
+    };
   }, []);
 
   return { isAdmin, loading };

@@ -40,6 +40,33 @@ const VideoGridInterface: React.FC = () => {
     loadAdminVideos();
   }, []);
 
+  // Keyboard shortcuts for admin
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+Shift+E to open admin login
+      if (e.ctrlKey && e.shiftKey && e.key === 'E') {
+        e.preventDefault();
+        if (!isAdmin) {
+          setShowAdminLogin(true);
+        }
+      }
+      // Ctrl+Shift+L to logout from admin
+      if (e.ctrlKey && e.shiftKey && e.key === 'L') {
+        e.preventDefault();
+        if (isAdmin) {
+          supabase.auth.signOut();
+          toast({
+            title: "Logged out",
+            description: "You have been logged out of admin mode",
+          });
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isAdmin, toast]);
+
   const loadOccupiedSlots = async () => {
     try {
       const { data, error } = await supabase
@@ -92,7 +119,10 @@ const VideoGridInterface: React.FC = () => {
 
   const handleLogin = () => {
     setShowAdminLogin(false);
-    // Admin status will be checked via database
+    toast({
+      title: "Welcome, Admin",
+      description: "You now have admin access",
+    });
   };
 
   const handleVideoUpload = async (slotId: string, file: File) => {
@@ -377,16 +407,15 @@ const VideoGridInterface: React.FC = () => {
           setShowSlotSelector(true);
           setIsNavOpen(false);
         }}
-        onAdminAccess={() => {
-          handleAdminAccess();
-          setIsNavOpen(false);
-        }}
         selectedSlots={selectedSlots}
       />
 
       {/* Modals */}
       {showAdminLogin && (
-        <AdminLogin onLogin={handleLogin} />
+        <AdminLogin 
+          onLogin={handleLogin} 
+          onClose={() => setShowAdminLogin(false)}
+        />
       )}
 
       {showSlotSelector && (

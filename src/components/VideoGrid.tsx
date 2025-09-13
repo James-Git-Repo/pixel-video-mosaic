@@ -34,7 +34,7 @@ interface DragState {
 }
 
 const GRID_SIZE = 1000; // 1000x1000 = 1,000,000 slots
-const SLOT_SIZE = 10; // 10x10 pixels per slot
+const SLOT_SIZE = 0.8; // Smaller slots to fit entire grid in view
 
 const VideoGrid: React.FC<VideoGridProps> = ({ 
   videos, 
@@ -45,7 +45,8 @@ const VideoGrid: React.FC<VideoGridProps> = ({
   onSelectionChange,
   onSlotClick
 }) => {
-  const [zoom, setZoom] = useState(1);
+  const { isAdmin } = useIsAdmin();
+  const [zoom, setZoom] = useState(isAdmin ? 1 : 0.8);
   const [dragState, setDragState] = useState<DragState>({
     isSelecting: false,
     startX: 0,
@@ -55,7 +56,6 @@ const VideoGrid: React.FC<VideoGridProps> = ({
   });
   const [floatingPill, setFloatingPill] = useState<{x: number, y: number, slots: number} | null>(null);
   const [errorTooltip, setErrorTooltip] = useState<{x: number, y: number, message: string} | null>(null);
-  const { isAdmin } = useIsAdmin();
   const gridRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 

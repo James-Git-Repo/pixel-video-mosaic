@@ -47,6 +47,30 @@ const VideoGrid: React.FC<VideoGridProps> = ({
 }) => {
   const { isAdmin } = useIsAdmin();
   const [zoom, setZoom] = useState(isAdmin ? 1 : 0.8);
+  const [gridDimensions, setGridDimensions] = useState({
+    width: 1200,
+    height: 800
+  });
+  
+  // Update grid dimensions when window resizes
+  useEffect(() => {
+    const updateDimensions = () => {
+      if (typeof window !== 'undefined') {
+        setGridDimensions({
+          width: window.innerWidth,
+          height: window.innerHeight
+        });
+      }
+    };
+
+    updateDimensions(); // Initial call
+    
+    if (typeof window !== 'undefined') {
+      window.addEventListener('resize', updateDimensions);
+      return () => window.removeEventListener('resize', updateDimensions);
+    }
+  }, []);
+
   const [dragState, setDragState] = useState<DragState>({
     isSelecting: false,
     startX: 0,
@@ -339,10 +363,10 @@ const VideoGrid: React.FC<VideoGridProps> = ({
           ref={gridRef}
           columnCount={GRID_SIZE}
           columnWidth={SLOT_SIZE * zoom}
-          height={window.innerHeight || 800}
+          height={gridDimensions.height}
           rowCount={GRID_SIZE}
           rowHeight={SLOT_SIZE * zoom}
-          width={window.innerWidth || 1200}
+          width={gridDimensions.width}
           overscanRowCount={50}
           overscanColumnCount={50}
         >

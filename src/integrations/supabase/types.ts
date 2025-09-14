@@ -389,7 +389,7 @@ export type Database = {
           status: string
           top_left: string | null
           transcoding_status: string | null
-          user_id: string | null
+          user_id: string
           video_asset_id: string | null
           video_filename: string | null
           video_url: string | null
@@ -414,7 +414,7 @@ export type Database = {
           status?: string
           top_left?: string | null
           transcoding_status?: string | null
-          user_id?: string | null
+          user_id: string
           video_asset_id?: string | null
           video_filename?: string | null
           video_url?: string | null
@@ -439,7 +439,7 @@ export type Database = {
           status?: string
           top_left?: string | null
           transcoding_status?: string | null
-          user_id?: string | null
+          user_id?: string
           video_asset_id?: string | null
           video_filename?: string | null
           video_url?: string | null

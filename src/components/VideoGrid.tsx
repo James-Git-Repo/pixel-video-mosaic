@@ -339,10 +339,10 @@ const VideoGrid: React.FC<VideoGridProps> = ({
           ref={gridRef}
           columnCount={GRID_SIZE}
           columnWidth={SLOT_SIZE * zoom}
-          height={800}
+          height={window.innerHeight || 800}
           rowCount={GRID_SIZE}
           rowHeight={SLOT_SIZE * zoom}
-          width={1200}
+          width={window.innerWidth || 1200}
           overscanRowCount={50}
           overscanColumnCount={50}
         >

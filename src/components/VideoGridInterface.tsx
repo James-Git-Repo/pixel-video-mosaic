@@ -369,8 +369,8 @@ const VideoGridInterface: React.FC = () => {
       )}
 
       {/* Main Grid */}
-      <main className="flex-1 relative">
-        <VideoGrid 
+      <main className="flex-1 relative overflow-hidden">
+        <VideoGrid
           videos={videos}
           occupiedSlots={occupiedSlots}
           onVideoUpload={handleVideoUpload}

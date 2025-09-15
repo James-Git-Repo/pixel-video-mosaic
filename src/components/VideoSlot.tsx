@@ -90,7 +90,7 @@ const VideoSlot: React.FC<VideoSlotProps> = ({
 
   return (
     <div
-      className={`relative w-[10px] h-[10px] border transition-all duration-200 ${getBorderStyle()}`}
+      className={`relative w-full h-full border transition-all duration-200 ${getBorderStyle()}`}
       data-slot-id={slotId}
       data-status={getSlotStatus()}
       aria-pressed={isSelected ? "true" : "false"}
@@ -113,9 +113,9 @@ const VideoSlot: React.FC<VideoSlotProps> = ({
           isAdmin && isHovered ? 'bg-muted/70' : ''
         } ${isOccupied && !isAdmin ? 'bg-orange-100/30' : ''}`}>
           {isOccupied && !isAdmin && isHovered ? (
-            <Lock className="w-1 h-1 text-orange-500" style={{ fontSize: '2px' }} />
+            <Lock className="w-3 h-3 text-orange-500" />
           ) : isAdmin && isHovered ? (
-            <Upload className="w-1 h-1 text-primary" style={{ fontSize: '2px' }} />
+            <Upload className="w-3 h-3 text-primary" />
           ) : null}
         </div>
       )}

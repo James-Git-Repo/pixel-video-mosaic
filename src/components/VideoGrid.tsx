@@ -18,7 +18,7 @@ interface VideoGridProps {
 }
 
 const GRID_SIZE = 1000; // 1000x1000 = 1,000,000 slots
-const SLOT_SIZE = 0.8; // Smaller slots to fit entire grid in view
+const SLOT_SIZE = 40; // Visible slot size
 
 const VideoGrid: React.FC<VideoGridProps> = ({ 
   videos, 

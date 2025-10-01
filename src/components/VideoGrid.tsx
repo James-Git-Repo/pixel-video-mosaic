@@ -2,6 +2,8 @@ import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import { FixedSizeGrid as Grid } from 'react-window';
 import VideoSlot from './VideoSlot';
 import { useIsAdmin } from '../hooks/useIsAdmin';
+import { Slider } from './ui/slider';
+import { ZoomIn, ZoomOut } from 'lucide-react';
 
 interface VideoData {
   [slotId: string]: string;
@@ -18,7 +20,7 @@ interface VideoGridProps {
 }
 
 const GRID_SIZE = 1000; // 1000x1000 = 1,000,000 slots
-const SLOT_SIZE = 40; // Visible slot size
+const BASE_SLOT_SIZE = 1; // Base size when zoomed out to see all slots
 
 const VideoGrid: React.FC<VideoGridProps> = ({ 
   videos, 
@@ -30,7 +32,7 @@ const VideoGrid: React.FC<VideoGridProps> = ({
   onSlotClick
 }) => {
   const { isAdmin } = useIsAdmin();
-  const [zoom] = useState(0.8);
+  const [zoom, setZoom] = useState(1);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
 
   useEffect(() => {
@@ -69,14 +71,33 @@ const VideoGrid: React.FC<VideoGridProps> = ({
     );
   }, [videos, occupiedSlots, onVideoUpload, onVideoView, selectedSlots, onSlotClick, isAdmin]);
 
+  const slotSize = BASE_SLOT_SIZE * zoom;
+
   return (
-    <div className="w-full h-full bg-background">
+    <div className="w-full h-full bg-background relative">
+      {/* Zoom Controls */}
+      <div className="absolute top-4 right-4 z-10 bg-background/95 backdrop-blur-sm border border-border rounded-lg p-4 shadow-lg">
+        <div className="flex items-center gap-3 min-w-[200px]">
+          <ZoomOut className="w-4 h-4 text-muted-foreground" />
+          <Slider
+            value={[zoom]}
+            onValueChange={(value) => setZoom(value[0])}
+            min={1}
+            max={50}
+            step={1}
+            className="flex-1"
+          />
+          <ZoomIn className="w-4 h-4 text-muted-foreground" />
+          <span className="text-xs text-muted-foreground min-w-[40px]">{zoom}x</span>
+        </div>
+      </div>
+
       <Grid
         columnCount={GRID_SIZE}
-        columnWidth={SLOT_SIZE * zoom}
+        columnWidth={slotSize}
         height={dimensions.height}
         rowCount={GRID_SIZE}
-        rowHeight={SLOT_SIZE * zoom}
+        rowHeight={slotSize}
         width={dimensions.width}
         overscanRowCount={10}
         overscanColumnCount={10}

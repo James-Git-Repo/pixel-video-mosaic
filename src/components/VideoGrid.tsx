@@ -20,7 +20,7 @@ interface VideoGridProps {
 }
 
 const GRID_SIZE = 1000; // 1000x1000 = 1,000,000 slots
-const BASE_SLOT_SIZE = 1; // Base size when zoomed out to see all slots
+const BASE_SLOT_SIZE = 40; // Base size for slots
 
 const VideoGrid: React.FC<VideoGridProps> = ({ 
   videos, 
@@ -82,9 +82,9 @@ const VideoGrid: React.FC<VideoGridProps> = ({
           <Slider
             value={[zoom]}
             onValueChange={(value) => setZoom(value[0])}
-            min={1}
-            max={50}
-            step={1}
+            min={0.1}
+            max={5}
+            step={0.1}
             className="flex-1"
           />
           <ZoomIn className="w-4 h-4 text-muted-foreground" />

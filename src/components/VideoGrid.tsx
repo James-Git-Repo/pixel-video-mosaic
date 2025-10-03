@@ -34,6 +34,10 @@ const VideoGrid: React.FC<VideoGridProps> = ({
   const { isAdmin } = useIsAdmin();
   const [zoom, setZoom] = useState(1);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState<{ row: number; col: number } | null>(null);
+  const [dragEnd, setDragEnd] = useState<{ row: number; col: number } | null>(null);
+  const gridRef = useRef<any>(null);
 
   useEffect(() => {
     const updateDimensions = () => {
@@ -50,9 +54,92 @@ const VideoGrid: React.FC<VideoGridProps> = ({
     return () => window?.removeEventListener('resize', updateDimensions);
   }, []);
 
+  // Mouse wheel zoom
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? -0.1 : 0.1;
+      setZoom(prev => Math.max(0.1, Math.min(5, prev + delta)));
+    };
+
+    const gridElement = gridRef.current?._outerRef;
+    if (gridElement) {
+      gridElement.addEventListener('wheel', handleWheel, { passive: false });
+      return () => gridElement.removeEventListener('wheel', handleWheel);
+    }
+  }, []);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (isAdmin) return;
+    
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left + (gridRef.current?.state.scrollLeft || 0);
+    const y = e.clientY - rect.top + (gridRef.current?.state.scrollTop || 0);
+    
+    const col = Math.floor(x / slotSize);
+    const row = Math.floor(y / slotSize);
+    
+    setIsDragging(true);
+    setDragStart({ row, col });
+    setDragEnd({ row, col });
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !dragStart || isAdmin) return;
+    
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left + (gridRef.current?.state.scrollLeft || 0);
+    const y = e.clientY - rect.top + (gridRef.current?.state.scrollTop || 0);
+    
+    const col = Math.floor(x / slotSize);
+    const row = Math.floor(y / slotSize);
+    
+    setDragEnd({ row, col });
+  };
+
+  const handleMouseUp = () => {
+    if (!isDragging || !dragStart || !dragEnd || isAdmin) {
+      setIsDragging(false);
+      return;
+    }
+
+    const minRow = Math.min(dragStart.row, dragEnd.row);
+    const maxRow = Math.max(dragStart.row, dragEnd.row);
+    const minCol = Math.min(dragStart.col, dragEnd.col);
+    const maxCol = Math.max(dragStart.col, dragEnd.col);
+
+    const newSelection = new Set<string>();
+    for (let row = minRow; row <= maxRow && row < GRID_SIZE; row++) {
+      for (let col = minCol; col <= maxCol && col < GRID_SIZE; col++) {
+        const slotId = `${row}-${col}`;
+        if (!occupiedSlots.has(slotId)) {
+          newSelection.add(slotId);
+        }
+      }
+    }
+
+    onSelectionChange?.(newSelection);
+    setIsDragging(false);
+    setDragStart(null);
+    setDragEnd(null);
+  };
+
   const Cell = useCallback(({ columnIndex, rowIndex, style }: any) => {
     const slotId = `${rowIndex}-${columnIndex}`;
     const hasVideo = !!videos[slotId];
+    
+    // Check if this slot is in the drag selection
+    let isInDragSelection = false;
+    if (isDragging && dragStart && dragEnd) {
+      const minRow = Math.min(dragStart.row, dragEnd.row);
+      const maxRow = Math.max(dragStart.row, dragEnd.row);
+      const minCol = Math.min(dragStart.col, dragEnd.col);
+      const maxCol = Math.max(dragStart.col, dragEnd.col);
+      
+      isInDragSelection = rowIndex >= minRow && rowIndex <= maxRow && 
+                         columnIndex >= minCol && columnIndex <= maxCol &&
+                         !occupiedSlots.has(slotId);
+    }
     
     return (
       <div style={style}>
@@ -64,17 +151,24 @@ const VideoGrid: React.FC<VideoGridProps> = ({
           isAdmin={isAdmin}
           onVideoUpload={onVideoUpload}
           onVideoView={onVideoView}
-          isSelected={selectedSlots.has(slotId)}
+          isSelected={selectedSlots.has(slotId) || isInDragSelection}
           onSlotClick={() => onSlotClick?.(slotId)}
         />
       </div>
     );
-  }, [videos, occupiedSlots, onVideoUpload, onVideoView, selectedSlots, onSlotClick, isAdmin]);
+  }, [videos, occupiedSlots, onVideoUpload, onVideoView, selectedSlots, onSlotClick, isAdmin, isDragging, dragStart, dragEnd]);
 
   const slotSize = BASE_SLOT_SIZE * zoom;
 
   return (
-    <div className="w-full h-full bg-background relative">
+    <div 
+      className="w-full h-full bg-background relative"
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
+      style={{ cursor: isDragging ? 'crosshair' : 'default' }}
+    >
       {/* Zoom Controls */}
       <div className="absolute top-4 right-4 z-10 bg-background/95 backdrop-blur-sm border border-border rounded-lg p-4 shadow-lg">
         <div className="flex items-center gap-3 min-w-[200px]">
@@ -88,11 +182,12 @@ const VideoGrid: React.FC<VideoGridProps> = ({
             className="flex-1"
           />
           <ZoomIn className="w-4 h-4 text-muted-foreground" />
-          <span className="text-xs text-muted-foreground min-w-[40px]">{zoom}x</span>
+          <span className="text-xs text-muted-foreground min-w-[40px]">{zoom.toFixed(1)}x</span>
         </div>
       </div>
 
       <Grid
+        ref={gridRef}
         columnCount={GRID_SIZE}
         columnWidth={slotSize}
         height={dimensions.height}

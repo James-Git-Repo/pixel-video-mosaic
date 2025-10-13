@@ -14,68 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      admin_video_items: {
-        Row: {
-          admin_video_id: string | null
-          created_at: string | null
-          slot_id: string
-        }
-        Insert: {
-          admin_video_id?: string | null
-          created_at?: string | null
-          slot_id: string
-        }
-        Update: {
-          admin_video_id?: string | null
-          created_at?: string | null
-          slot_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "admin_video_items_admin_video_id_fkey"
-            columns: ["admin_video_id"]
-            isOneToOne: false
-            referencedRelation: "admin_videos"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      admin_videos: {
-        Row: {
-          bottom_right: string | null
-          created_at: string
-          id: string
-          rectangle_id: string | null
-          slot_id: string
-          top_left: string | null
-          uploaded_by: string | null
-          video_asset_id: string | null
-          video_url: string
-        }
-        Insert: {
-          bottom_right?: string | null
-          created_at?: string
-          id?: string
-          rectangle_id?: string | null
-          slot_id: string
-          top_left?: string | null
-          uploaded_by?: string | null
-          video_asset_id?: string | null
-          video_url: string
-        }
-        Update: {
-          bottom_right?: string | null
-          created_at?: string
-          id?: string
-          rectangle_id?: string | null
-          slot_id?: string
-          top_left?: string | null
-          uploaded_by?: string | null
-          video_asset_id?: string | null
-          video_url?: string
-        }
-        Relationships: []
-      }
       occupied_slot_items: {
         Row: {
           created_at: string | null
@@ -235,6 +173,42 @@ export type Database = {
         }
         Relationships: []
       }
+      projects: {
+        Row: {
+          blurb: string | null
+          cover_url: string | null
+          href: string | null
+          id: string
+          sort: number | null
+          status: string | null
+          tag: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          blurb?: string | null
+          cover_url?: string | null
+          href?: string | null
+          id: string
+          sort?: number | null
+          status?: string | null
+          tag?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          blurb?: string | null
+          cover_url?: string | null
+          href?: string | null
+          id?: string
+          sort?: number | null
+          status?: string | null
+          tag?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       reservations: {
         Row: {
           amount_cents: number
@@ -354,21 +328,6 @@ export type Database = {
         }
         Relationships: []
       }
-      user_roles: {
-        Row: {
-          role: string
-          user_id: string
-        }
-        Insert: {
-          role: string
-          user_id: string
-        }
-        Update: {
-          role?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       video_submissions: {
         Row: {
           admin_notes: string | null
@@ -382,6 +341,7 @@ export type Database = {
           email: string
           height: number | null
           id: string
+          linked_url: string | null
           payment_intent_id: string
           poster_url: string | null
           rejected_at: string | null
@@ -407,6 +367,7 @@ export type Database = {
           email: string
           height?: number | null
           id?: string
+          linked_url?: string | null
           payment_intent_id: string
           poster_url?: string | null
           rejected_at?: string | null
@@ -432,6 +393,7 @@ export type Database = {
           email?: string
           height?: number | null
           id?: string
+          linked_url?: string | null
           payment_intent_id?: string
           poster_url?: string | null
           rejected_at?: string | null
@@ -452,27 +414,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      admin_list_submissions: {
-        Args: Record<PropertyKey, never>
-        Returns: {
-          amount_cents: number
-          approved_at: string
-          bottom_right: string
-          created_at: string
-          currency: string
-          duration_seconds: number
-          email: string
-          height: number
-          id: string
-          payment_intent_id: string
-          poster_url: string
-          rejected_at: string
-          slot_count: number
-          status: string
-          top_left: string
-          width: number
-        }[]
-      }
       clean_expired_reservations: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -493,10 +434,6 @@ export type Database = {
       free_occupied_slots: {
         Args: { submission_id: string }
         Returns: undefined
-      }
-      is_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
       }
       purge_expired_slot_holds: {
         Args: Record<PropertyKey, never>

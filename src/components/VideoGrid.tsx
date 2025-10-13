@@ -1,7 +1,6 @@
-import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { FixedSizeGrid as Grid } from 'react-window';
 import VideoSlot from './VideoSlot';
-import { useIsAdmin } from '../hooks/useIsAdmin';
 import { Slider } from './ui/slider';
 import { ZoomIn, ZoomOut } from 'lucide-react';
 
@@ -12,7 +11,6 @@ interface VideoData {
 interface VideoGridProps {
   videos: VideoData;
   occupiedSlots: Set<string>;
-  onVideoUpload: (slotId: string, file: File) => void;
   onVideoView: (slotId: string, video: string) => void;
   selectedSlots?: Set<string>;
   onSelectionChange?: (selectedSlots: Set<string>) => void;
@@ -24,14 +22,12 @@ const BASE_SLOT_SIZE = 40; // Base size for slots
 
 const VideoGrid: React.FC<VideoGridProps> = ({ 
   videos, 
-  occupiedSlots, 
-  onVideoUpload, 
+  occupiedSlots,
   onVideoView, 
   selectedSlots = new Set(),
   onSelectionChange,
   onSlotClick
 }) => {
-  const { isAdmin } = useIsAdmin();
   const [zoom, setZoom] = useState(1);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
   const [isDragging, setIsDragging] = useState(false);
@@ -70,7 +66,6 @@ const VideoGrid: React.FC<VideoGridProps> = ({
   }, []);
 
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (isAdmin) return;
     
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left + (gridRef.current?.state.scrollLeft || 0);
@@ -85,7 +80,7 @@ const VideoGrid: React.FC<VideoGridProps> = ({
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging || !dragStart || isAdmin) return;
+    if (!isDragging || !dragStart) return;
     
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left + (gridRef.current?.state.scrollLeft || 0);
@@ -98,7 +93,7 @@ const VideoGrid: React.FC<VideoGridProps> = ({
   };
 
   const handleMouseUp = () => {
-    if (!isDragging || !dragStart || !dragEnd || isAdmin) {
+    if (!isDragging || !dragStart || !dragEnd) {
       setIsDragging(false);
       return;
     }
@@ -148,15 +143,15 @@ const VideoGrid: React.FC<VideoGridProps> = ({
           video={videos[slotId]}
           isOccupied={occupiedSlots.has(slotId)}
           hasVideo={hasVideo}
-          isAdmin={isAdmin}
-          onVideoUpload={onVideoUpload}
+          isAdmin={false}
+          onVideoUpload={() => {}}
           onVideoView={onVideoView}
           isSelected={selectedSlots.has(slotId) || isInDragSelection}
           onSlotClick={() => onSlotClick?.(slotId)}
         />
       </div>
     );
-  }, [videos, occupiedSlots, onVideoUpload, onVideoView, selectedSlots, onSlotClick, isAdmin, isDragging, dragStart, dragEnd]);
+  }, [videos, occupiedSlots, onVideoView, selectedSlots, onSlotClick, isDragging, dragStart, dragEnd]);
 
   const slotSize = BASE_SLOT_SIZE * zoom;
 

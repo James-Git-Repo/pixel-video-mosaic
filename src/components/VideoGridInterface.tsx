@@ -1,32 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import VideoGrid from './VideoGrid';
-import AdminLogin from './AdminLogin';
 import SlotSelector from './SlotSelector';
-import AdminUploadPopup from './AdminUploadPopup';
 import VideoViewer from './VideoViewer';
 import WelcomeVideoModal from './WelcomeVideoModal';
 import UserUploadPopup from './UserUploadPopup';
-import AdminPanel from './AdminPanel';
 import NavigationDrawer from './NavigationDrawer';
-import CheckoutModal from './CheckoutModal';
-import { Film, Layers, Zap, Settings, LogOut, Eye, Upload, ShoppingCart, Users, X, Sparkles, Menu } from 'lucide-react';
+import { ShoppingCart, X, Sparkles, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useIsAdmin } from '../hooks/useIsAdmin';
 import { useSlotSelection } from '../hooks/useSlotSelection';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 const VideoGridInterface: React.FC = () => {
-  const { isAdmin } = useIsAdmin();
   const { selectedSlots, toggleSlot, clearSelection, selectionCount } = useSlotSelection();
-  const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [showSlotSelector, setShowSlotSelector] = useState(false);
-  const [showUploadPopup, setShowUploadPopup] = useState(false);
   const [showUserUpload, setShowUserUpload] = useState(false);
-  const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [showWelcomeVideo, setShowWelcomeVideo] = useState(true);
   const [showVideoViewer, setShowVideoViewer] = useState(false);
-  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [currentViewedVideo, setCurrentViewedVideo] = useState<{slotId: string, video: string} | null>(null);
   const [videos, setVideos] = useState<{ [slotId: string]: string }>({});
   const [occupiedSlots, setOccupiedSlots] = useState<Set<string>>(new Set());
@@ -37,35 +27,7 @@ const VideoGridInterface: React.FC = () => {
   // Load occupied slots and videos on component mount
   useEffect(() => {
     loadOccupiedSlots();
-    loadAdminVideos();
   }, []);
-
-  // Keyboard shortcuts for admin
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Ctrl+Shift+E to open admin login
-      if (e.ctrlKey && e.shiftKey && e.key === 'E') {
-        e.preventDefault();
-        if (!isAdmin) {
-          setShowAdminLogin(true);
-        }
-      }
-      // Ctrl+Shift+L to logout from admin
-      if (e.ctrlKey && e.shiftKey && e.key === 'L') {
-        e.preventDefault();
-        if (isAdmin) {
-          supabase.auth.signOut();
-          toast({
-            title: "Logged out",
-            description: "You have been logged out of admin mode",
-          });
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isAdmin, toast]);
 
   const loadOccupiedSlots = async () => {
     try {
@@ -84,94 +46,9 @@ const VideoGridInterface: React.FC = () => {
       });
       
       setOccupiedSlots(slotsSet);
-      setVideos(prev => ({ ...prev, ...videosMap }));
+      setVideos(videosMap);
     } catch (error) {
       console.error('Error loading occupied slots:', error);
-    }
-  };
-
-  const loadAdminVideos = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('admin_videos')
-        .select('slot_id, video_url');
-      
-      if (error) throw error;
-      
-      const adminVideosMap: { [slotId: string]: string } = {};
-      data?.forEach(video => {
-        adminVideosMap[video.slot_id] = video.video_url;
-      });
-      
-      setVideos(prev => ({ ...prev, ...adminVideosMap }));
-    } catch (error) {
-      console.error('Error loading admin videos:', error);
-    }
-  };
-
-  const handleAdminAccess = () => {
-    if (isAdmin) {
-      setShowAdminPanel(true);
-    } else {
-      setShowAdminLogin(true);
-    }
-  };
-
-  const handleLogin = () => {
-    setShowAdminLogin(false);
-    toast({
-      title: "Welcome, Admin",
-      description: "You now have admin access",
-    });
-  };
-
-  const handleVideoUpload = async (slotId: string, file: File) => {
-    if (!isAdmin) return;
-    
-    try {
-      // Upload file to Supabase Storage
-      const fileName = `admin_${Date.now()}_${file.name}`;
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('user-videos')
-        .upload(fileName, file);
-
-      if (uploadError) throw uploadError;
-
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('user-videos')
-        .getPublicUrl(fileName);
-
-      // Save to admin_videos table
-      const { error: dbError } = await supabase
-        .from('admin_videos')
-        .upsert({
-          slot_id: slotId,
-          video_url: publicUrl,
-          uploaded_by: 'admin'
-        });
-
-      if (dbError) throw dbError;
-
-      // Update local state
-      setVideos(prev => ({
-        ...prev,
-        [slotId]: publicUrl
-      }));
-
-      toast({
-        title: "Video uploaded successfully",
-        description: `Video has been uploaded to slot ${slotId}`,
-      });
-
-      console.log(`Admin video uploaded to slot ${slotId}`);
-    } catch (error) {
-      console.error('Error uploading admin video:', error);
-      toast({
-        title: "Upload failed",
-        description: "There was an error uploading the video",
-        variant: "destructive",
-      });
     }
   };
 
@@ -186,9 +63,7 @@ const VideoGridInterface: React.FC = () => {
   };
 
   const handleSlotClick = (slotId: string) => {
-    if (!isAdmin) {
-      toggleSlot(slotId);
-    }
+    toggleSlot(slotId);
   };
 
   // Calculate selection dimensions
@@ -214,15 +89,7 @@ const VideoGridInterface: React.FC = () => {
 
   const handlePurchaseSelected = () => {
     if (selectedSlots.size === 0) return;
-    setShowCheckoutModal(true);
-  };
-
-  const handleCheckoutSuccess = () => {
-    clearSelection();
-    toast({
-      title: "Redirecting to checkout",
-      description: "You will be redirected to complete your purchase.",
-    });
+    setShowUserUpload(true);
   };
 
   const handleCloseVideoViewer = () => {
@@ -255,66 +122,26 @@ const VideoGridInterface: React.FC = () => {
             </p>
           </div>
 
-          {/* Floating Buy Button (for non-admin) */}
-          {!isAdmin && (
-              <Button
-                onClick={handlePurchaseSelected}
-                disabled={selectionCount === 0}
-                className="cyber-bg text-background font-cyber font-bold px-6 py-3 glow-hover disabled:opacity-30 disabled:cursor-not-allowed shadow-xl border border-neon-cyan/30 relative overflow-hidden group"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-neon-pink to-neon-blue opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
-                <ShoppingCart className="w-5 h-5 mr-2" />
-                <span className="relative z-10">
-                  Buy {selectionCount || ''} Slot{selectionCount !== 1 ? 's' : ''}
-                </span>
-              </Button>
-          )}
+          {/* Floating Buy Button */}
+          <Button
+            onClick={handlePurchaseSelected}
+            disabled={selectionCount === 0}
+            className="cyber-bg text-background font-cyber font-bold px-6 py-3 glow-hover disabled:opacity-30 disabled:cursor-not-allowed shadow-xl border border-neon-cyan/30 relative overflow-hidden group"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-neon-pink to-neon-blue opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+            <ShoppingCart className="w-5 h-5 mr-2" />
+            <span className="relative z-10">
+              Buy {selectionCount || ''} Slot{selectionCount !== 1 ? 's' : ''}
+            </span>
+          </Button>
         </div>
       </header>
-
-      {/* Admin Control Bar - Only show if admin */}
-      {isAdmin && (
-        <div className="bg-card/50 backdrop-blur-sm border-b border-primary/20 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 neon-bg rounded-lg">
-                <Film className="w-6 h-6 text-background" />
-              </div>
-              <div>
-                <h2 className="text-xl font-cyber font-bold text-foreground">Admin Control Panel</h2>
-                <p className="text-sm text-muted-foreground font-futura">Upload and manage video content</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-3">
-              <Button
-                onClick={() => setShowAdminPanel(true)}
-                className="bg-secondary hover:bg-secondary/80 text-secondary-foreground font-futura glow-hover"
-              >
-                <Users className="w-4 h-4 mr-2" />
-                Manage Submissions
-              </Button>
-              
-              <Button
-                onClick={() => setShowUploadPopup(true)}
-                className="neon-bg text-background font-futura glow-hover"
-              >
-                <Upload className="w-4 h-4 mr-2" />
-                Upload Video
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Instructions */}
       <div className="bg-gradient-to-r from-primary/10 via-secondary/10 to-accent/10 border-b border-primary/20 px-6 py-4">
         <div className="text-center space-y-2">
           <p className="text-sm text-foreground font-futura">
-            {isAdmin 
-              ? "Upload videos to single or multiple slots simultaneously. Duration auto-adjusts: 15s base + 5s per additional slot (max 2.5 minutes)."
-              : "Drag to select rectangular areas. Double-click videos to view or empty slots for info. Each slot costs $0.50 USD."
-            }
+            Drag to select rectangular areas. Double-click videos to view or empty slots for info. Each slot costs $0.50 USD.
           </p>
           <div className="flex items-center justify-center gap-2 text-primary font-semibold animate-glow-pulse">
             <Sparkles className="w-4 h-4" />
@@ -324,9 +151,8 @@ const VideoGridInterface: React.FC = () => {
         </div>
       </div>
 
-
       {/* Selection Summary Panel */}
-      {selectionCount > 0 && !isAdmin && (
+      {selectionCount > 0 && (
         <div className="absolute top-32 right-4 z-20 bg-card/90 backdrop-blur-sm border border-primary/30 rounded-lg p-4 shadow-lg min-w-[280px] glow-hover">
           <div className="space-y-3">
             <div className="flex items-center gap-2">
@@ -373,7 +199,6 @@ const VideoGridInterface: React.FC = () => {
         <VideoGrid
           videos={videos}
           occupiedSlots={occupiedSlots}
-          onVideoUpload={handleVideoUpload}
           onVideoView={handleVideoView}
           selectedSlots={selectedSlots}
           onSelectionChange={(newSelection) => {
@@ -411,13 +236,6 @@ const VideoGridInterface: React.FC = () => {
       />
 
       {/* Modals */}
-      {showAdminLogin && (
-        <AdminLogin 
-          onLogin={handleLogin} 
-          onClose={() => setShowAdminLogin(false)}
-        />
-      )}
-
       {showSlotSelector && (
         <SlotSelector 
           videos={videos}
@@ -425,14 +243,7 @@ const VideoGridInterface: React.FC = () => {
         />
       )}
 
-      {showUploadPopup && isAdmin && (
-        <AdminUploadPopup
-          onClose={() => setShowUploadPopup(false)}
-          onVideoUpload={handleVideoUpload}
-        />
-      )}
-
-      {showUserUpload && !isAdmin && (
+      {showUserUpload && (
         <UserUploadPopup
           onClose={() => {
             setShowUserUpload(false);
@@ -448,7 +259,7 @@ const VideoGridInterface: React.FC = () => {
         <WelcomeVideoModal
           onClose={() => setShowWelcomeVideo(false)}
           welcomeVideo={welcomeVideo}
-          isAdmin={isAdmin}
+          isAdmin={false}
           onVideoUpload={handleWelcomeVideoUpload}
         />
       )}
@@ -458,19 +269,6 @@ const VideoGridInterface: React.FC = () => {
           slotId={currentViewedVideo.slotId}
           video={currentViewedVideo.video}
           onClose={handleCloseVideoViewer}
-        />
-      )}
-
-      {showAdminPanel && isAdmin && (
-        <AdminPanel onClose={() => setShowAdminPanel(false)} />
-      )}
-
-      {showCheckoutModal && (
-        <CheckoutModal
-          isOpen={showCheckoutModal}
-          onClose={() => setShowCheckoutModal(false)}
-        selectedSlots={Array.from(selectedSlots)}
-          onCheckoutSuccess={handleCheckoutSuccess}
         />
       )}
     </div>

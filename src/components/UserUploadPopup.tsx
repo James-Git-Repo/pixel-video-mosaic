@@ -19,6 +19,7 @@ const UserUploadPopup: React.FC<UserUploadPopupProps> = ({
   const [selectedSlots, setSelectedSlots] = useState<string[]>(preSelectedSlots);
   const [uploadedVideo, setUploadedVideo] = useState<File | null>(null);
   const [uploadedVideoUrl, setUploadedVideoUrl] = useState<string | null>(null);
+  const [linkedUrl, setLinkedUrl] = useState('');
   const [currentSlotInput, setCurrentSlotInput] = useState('');
   const [email, setEmail] = useState('');
   const [promoCode, setPromoCode] = useState('');
@@ -143,7 +144,8 @@ const UserUploadPopup: React.FC<UserUploadPopupProps> = ({
           body: {
             email: email,
             hold_id: holdData.hold_id,
-            promo_code: promoCode.trim()
+            promo_code: promoCode.trim(),
+            linked_url: linkedUrl || null
           }
         });
 
@@ -151,7 +153,7 @@ const UserUploadPopup: React.FC<UserUploadPopupProps> = ({
 
         toast({
           title: "Free submission created!",
-          description: "Your submission is now under review. You'll receive an email update soon.",
+          description: "You'll receive an email with upload instructions soon.",
         });
 
         // Navigate to upload page with submission info
@@ -164,14 +166,15 @@ const UserUploadPopup: React.FC<UserUploadPopupProps> = ({
         body: {
           hold_id: holdData.hold_id,
           email: email,
-          slot_count: selectedSlots.length
+          slot_count: selectedSlots.length,
+          linked_url: linkedUrl || null
         }
       });
 
       if (checkoutError) throw checkoutError;
 
-      // Open Stripe checkout in new tab (as requested)
-      window.open(checkoutData.url, '_blank');
+      // Redirect to Stripe checkout
+      window.location.href = checkoutData.url;
 
     } catch (error: any) {
       console.error('Error creating submission:', error);
@@ -223,6 +226,19 @@ const UserUploadPopup: React.FC<UserUploadPopupProps> = ({
               placeholder="Enter promo code"
               className="w-full px-3 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
             />
+          </div>
+
+          {/* URL Input */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Link to URL (Optional)</label>
+            <input
+              type="url"
+              value={linkedUrl}
+              onChange={(e) => setLinkedUrl(e.target.value)}
+              placeholder="https://example.com"
+              className="w-full px-3 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+            <p className="text-xs text-muted-foreground">Add a clickable link to your video slot</p>
           </div>
 
           {/* Slot Selection */}
@@ -316,12 +332,12 @@ const UserUploadPopup: React.FC<UserUploadPopupProps> = ({
             <div className="flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-blue-500 mt-0.5" />
               <div className="text-sm">
-                <p className="font-medium text-blue-900 mb-1">Payment & Review Process</p>
+                <p className="font-medium text-blue-900 mb-1">Payment & Upload Process</p>
                 <ul className="text-blue-700 space-y-1">
                   <li>• Secure payment processing via Stripe</li>
-                  <li>• Videos are subject to admin approval before going live</li>
-                  <li>• You'll receive email notifications about your submission status</li>
-                  <li>• Inappropriate content will be rejected with full refund</li>
+                  <li>• Upload your video after payment confirmation</li>
+                  <li>• Videos go live immediately after upload</li>
+                  <li>• All content must be AI-generated</li>
                 </ul>
               </div>
             </div>

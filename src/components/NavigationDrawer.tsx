@@ -5,14 +5,12 @@ import {
   ShoppingCart, 
   Upload, 
   Eye, 
-  Settings, 
   FileText, 
   Shield, 
   RotateCcw,
   Menu
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useIsAdmin } from '@/hooks/useIsAdmin';
 
 interface NavigationDrawerProps {
   isOpen: boolean;
@@ -31,7 +29,6 @@ const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
   onSearchSlot,
   selectedSlots
 }) => {
-  const { isAdmin } = useIsAdmin();
   const navigate = useNavigate();
 
   const menuItems = [
@@ -103,8 +100,7 @@ const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
         </div>
 
         {/* Buy Slots Button - Prominent */}
-        {!isAdmin && (
-          <div className="p-6 border-b border-sidebar-border">
+        <div className="p-6 border-b border-sidebar-border">
             <Button
               onClick={onBuySlots}
               disabled={selectedSlots.size === 0}
@@ -132,16 +128,13 @@ const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
               </div>
             )}
           </div>
-        )}
 
         {/* Main Navigation */}
         <div className="p-4 space-y-2">
           <h3 className="text-sm font-futura font-semibold text-sidebar-foreground/80 uppercase tracking-wider mb-4">
             Navigation
           </h3>
-          {menuItems
-            .filter(item => !isAdmin || item.showForAdmin)
-            .map((item) => {
+          {menuItems.map((item) => {
               const Icon = item.icon;
               return (
                 <Button

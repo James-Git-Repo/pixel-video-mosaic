@@ -13,9 +13,6 @@ import Terms from "./pages/Terms";
 import RefundPolicy from "./pages/RefundPolicy";
 import NotFound from "./pages/NotFound";
 
-import ProtectedAdminRoute from "./routes/ProtectedAdminRoute";
-import AdminPanel from "./components/AdminPanel";
-
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -32,17 +29,6 @@ const App = () => (
           <Route path="/content-policy" element={<ContentPolicy />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/refund-policy" element={<RefundPolicy />} />
-
-          {/* NEW: /admin route protected by the hook */}
-          <Route
-            path="/admin"
-            element={
-              <ProtectedAdminRoute>
-                <AdminPanel />
-              </ProtectedAdminRoute>
-            }
-          />
-
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

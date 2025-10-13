@@ -33,15 +33,6 @@ verify_jwt = true
 [functions.verify-payment]
 verify_jwt = false
 
-[functions.admin-cashout]
-verify_jwt = true
-
-[functions.admin-change-password]
-verify_jwt = true
-
-[functions.admin-manage-submission]
-verify_jwt = true
-
 [functions.release-expired-holds]
 verify_jwt = false
 

@@ -1,8 +1,6 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { FixedSizeGrid as Grid } from 'react-window';
 import VideoSlot from './VideoSlot';
-import { Slider } from './ui/slider';
-import { ZoomIn, ZoomOut } from 'lucide-react';
 
 interface VideoData {
   [slotId: string]: string;
@@ -28,7 +26,6 @@ const VideoGrid: React.FC<VideoGridProps> = ({
   onSelectionChange,
   onSlotClick
 }) => {
-  const [zoom, setZoom] = useState(1);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<{ row: number; col: number } | null>(null);
@@ -48,21 +45,6 @@ const VideoGrid: React.FC<VideoGridProps> = ({
     
     window?.addEventListener('resize', updateDimensions);
     return () => window?.removeEventListener('resize', updateDimensions);
-  }, []);
-
-  // Mouse wheel zoom
-  useEffect(() => {
-    const handleWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      const delta = e.deltaY > 0 ? -0.1 : 0.1;
-      setZoom(prev => Math.max(0.1, Math.min(5, prev + delta)));
-    };
-
-    const gridElement = gridRef.current?._outerRef;
-    if (gridElement) {
-      gridElement.addEventListener('wheel', handleWheel, { passive: false });
-      return () => gridElement.removeEventListener('wheel', handleWheel);
-    }
   }, []);
 
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -153,44 +135,28 @@ const VideoGrid: React.FC<VideoGridProps> = ({
     );
   }, [videos, occupiedSlots, onVideoView, selectedSlots, onSlotClick, isDragging, dragStart, dragEnd]);
 
-  const slotSize = BASE_SLOT_SIZE * zoom;
+  // Calculate slot size to fit entire grid on screen
+  const slotSize = Math.min(dimensions.width / GRID_SIZE, dimensions.height / GRID_SIZE);
 
   return (
     <div 
-      className="w-full h-full bg-background relative"
+      className="w-full h-full bg-background relative flex items-center justify-center"
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
       style={{ cursor: isDragging ? 'crosshair' : 'default' }}
     >
-      {/* Zoom Controls */}
-      <div className="absolute top-4 right-4 z-10 bg-background/95 backdrop-blur-sm border border-border rounded-lg p-4 shadow-lg">
-        <div className="flex items-center gap-3 min-w-[200px]">
-          <ZoomOut className="w-4 h-4 text-muted-foreground" />
-          <Slider
-            value={[zoom]}
-            onValueChange={(value) => setZoom(value[0])}
-            min={0.1}
-            max={5}
-            step={0.1}
-            className="flex-1"
-          />
-          <ZoomIn className="w-4 h-4 text-muted-foreground" />
-          <span className="text-xs text-muted-foreground min-w-[40px]">{zoom.toFixed(1)}x</span>
-        </div>
-      </div>
-
       <Grid
         ref={gridRef}
         columnCount={GRID_SIZE}
         columnWidth={slotSize}
-        height={dimensions.height}
+        height={GRID_SIZE * slotSize}
         rowCount={GRID_SIZE}
         rowHeight={slotSize}
-        width={dimensions.width}
-        overscanRowCount={10}
-        overscanColumnCount={10}
+        width={GRID_SIZE * slotSize}
+        overscanRowCount={0}
+        overscanColumnCount={0}
       >
         {Cell}
       </Grid>

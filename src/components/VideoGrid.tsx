@@ -34,9 +34,13 @@ const VideoGrid: React.FC<VideoGridProps> = ({
 
   useEffect(() => {
     const updateDimensions = () => {
+      // Account for any UI elements (header, padding, etc.)
+      const availableWidth = window?.innerWidth || 800;
+      const availableHeight = window?.innerHeight || 600;
+      
       setDimensions({
-        width: window?.innerWidth || 800,
-        height: window?.innerHeight || 600
+        width: availableWidth,
+        height: availableHeight
       });
     };
 
@@ -48,28 +52,40 @@ const VideoGrid: React.FC<VideoGridProps> = ({
   }, []);
 
   const handleMouseDown = (e: React.MouseEvent) => {
+    if (!gridRef.current) return;
     
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left + (gridRef.current?.state.scrollLeft || 0);
-    const y = e.clientY - rect.top + (gridRef.current?.state.scrollTop || 0);
+    // Get the grid element's position
+    const gridElement = gridRef.current._outerRef;
+    const rect = gridElement.getBoundingClientRect();
+    
+    // Calculate position relative to the grid
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
     
     const col = Math.floor(x / slotSize);
     const row = Math.floor(y / slotSize);
     
-    setIsDragging(true);
-    setDragStart({ row, col });
-    setDragEnd({ row, col });
+    // Ensure we're within bounds
+    if (col >= 0 && col < GRID_SIZE && row >= 0 && row < GRID_SIZE) {
+      setIsDragging(true);
+      setDragStart({ row, col });
+      setDragEnd({ row, col });
+    }
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging || !dragStart) return;
+    if (!isDragging || !dragStart || !gridRef.current) return;
     
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left + (gridRef.current?.state.scrollLeft || 0);
-    const y = e.clientY - rect.top + (gridRef.current?.state.scrollTop || 0);
+    // Get the grid element's position
+    const gridElement = gridRef.current._outerRef;
+    const rect = gridElement.getBoundingClientRect();
     
-    const col = Math.floor(x / slotSize);
-    const row = Math.floor(y / slotSize);
+    // Calculate position relative to the grid
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    const col = Math.max(0, Math.min(GRID_SIZE - 1, Math.floor(x / slotSize)));
+    const row = Math.max(0, Math.min(GRID_SIZE - 1, Math.floor(y / slotSize)));
     
     setDragEnd({ row, col });
   };
@@ -137,29 +153,34 @@ const VideoGrid: React.FC<VideoGridProps> = ({
 
   // Calculate slot size to fit entire grid on screen
   const slotSize = Math.min(dimensions.width / GRID_SIZE, dimensions.height / GRID_SIZE);
+  const gridWidth = GRID_SIZE * slotSize;
+  const gridHeight = GRID_SIZE * slotSize;
 
   return (
     <div 
-      className="w-full h-full bg-background relative flex items-center justify-center"
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
+      className="w-full h-full bg-background relative flex items-center justify-center overflow-hidden"
       style={{ cursor: isDragging ? 'crosshair' : 'default' }}
     >
-      <Grid
-        ref={gridRef}
-        columnCount={GRID_SIZE}
-        columnWidth={slotSize}
-        height={GRID_SIZE * slotSize}
-        rowCount={GRID_SIZE}
-        rowHeight={slotSize}
-        width={GRID_SIZE * slotSize}
-        overscanRowCount={0}
-        overscanColumnCount={0}
+      <div
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
       >
-        {Cell}
-      </Grid>
+        <Grid
+          ref={gridRef}
+          columnCount={GRID_SIZE}
+          columnWidth={slotSize}
+          height={gridHeight}
+          rowCount={GRID_SIZE}
+          rowHeight={slotSize}
+          width={gridWidth}
+          overscanRowCount={0}
+          overscanColumnCount={0}
+        >
+          {Cell}
+        </Grid>
+      </div>
     </div>
   );
 };

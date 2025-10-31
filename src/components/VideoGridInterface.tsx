@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import VideoGrid from './VideoGrid';
+import CanvasVideoGrid from './CanvasVideoGrid';
 import SlotSelector from './SlotSelector';
 import VideoViewer from './VideoViewer';
 import WelcomeVideoModal from './WelcomeVideoModal';
@@ -196,7 +196,7 @@ const VideoGridInterface: React.FC = () => {
 
       {/* Main Grid */}
       <main className="flex-1 relative overflow-hidden">
-        <VideoGrid
+        <CanvasVideoGrid
           videos={videos}
           occupiedSlots={occupiedSlots}
           onVideoView={handleVideoView}

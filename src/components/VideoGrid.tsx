@@ -17,7 +17,7 @@ interface VideoGridProps {
   onSlotClick?: (slotId: string) => void;
 }
 
-const GRID_SIZE = 1000; // 1000x1000 = 1,000,000 slots
+const GRID_SIZE = 100; // 100x100 = 10,000 slots
 const BASE_SLOT_SIZE = 40; // Base size for slots
 
 const VideoGrid: React.FC<VideoGridProps> = ({ 

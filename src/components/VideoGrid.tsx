@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { FixedSizeGrid as Grid } from 'react-window';
 import VideoSlot from './VideoSlot';
 
@@ -16,7 +16,6 @@ interface VideoGridProps {
 }
 
 const GRID_SIZE = 100; // 100x100 = 10,000 slots
-const BASE_SLOT_SIZE = 40; // Base size for slots
 
 const VideoGrid: React.FC<VideoGridProps> = ({ 
   videos, 
@@ -26,6 +25,7 @@ const VideoGrid: React.FC<VideoGridProps> = ({
   onSelectionChange,
   onSlotClick
 }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<{ row: number; col: number } | null>(null);
@@ -34,21 +34,23 @@ const VideoGrid: React.FC<VideoGridProps> = ({
 
   useEffect(() => {
     const updateDimensions = () => {
-      // Account for any UI elements (header, padding, etc.)
-      const availableWidth = window?.innerWidth || 800;
-      const availableHeight = window?.innerHeight || 600;
-      
-      setDimensions({
-        width: availableWidth,
-        height: availableHeight
-      });
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        setDimensions({
+          width: rect.width,
+          height: rect.height
+        });
+      }
     };
 
-    // Initial setup
     updateDimensions();
     
-    window?.addEventListener('resize', updateDimensions);
-    return () => window?.removeEventListener('resize', updateDimensions);
+    const resizeObserver = new ResizeObserver(updateDimensions);
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
+    
+    return () => resizeObserver.disconnect();
   }, []);
 
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -117,20 +119,29 @@ const VideoGrid: React.FC<VideoGridProps> = ({
     setDragEnd(null);
   };
 
+  // Compute drag selection area
+  const dragSelection = useMemo(() => {
+    if (!isDragging || !dragStart || !dragEnd) return null;
+    
+    const minRow = Math.min(dragStart.row, dragEnd.row);
+    const maxRow = Math.max(dragStart.row, dragEnd.row);
+    const minCol = Math.min(dragStart.col, dragEnd.col);
+    const maxCol = Math.max(dragStart.col, dragEnd.col);
+    
+    return { minRow, maxRow, minCol, maxCol };
+  }, [isDragging, dragStart, dragEnd]);
+
   const Cell = useCallback(({ columnIndex, rowIndex, style }: any) => {
     const slotId = `${rowIndex}-${columnIndex}`;
     const hasVideo = !!videos[slotId];
     
     // Check if this slot is in the drag selection
     let isInDragSelection = false;
-    if (isDragging && dragStart && dragEnd) {
-      const minRow = Math.min(dragStart.row, dragEnd.row);
-      const maxRow = Math.max(dragStart.row, dragEnd.row);
-      const minCol = Math.min(dragStart.col, dragEnd.col);
-      const maxCol = Math.max(dragStart.col, dragEnd.col);
-      
-      isInDragSelection = rowIndex >= minRow && rowIndex <= maxRow && 
-                         columnIndex >= minCol && columnIndex <= maxCol &&
+    if (dragSelection) {
+      isInDragSelection = rowIndex >= dragSelection.minRow && 
+                         rowIndex <= dragSelection.maxRow && 
+                         columnIndex >= dragSelection.minCol && 
+                         columnIndex <= dragSelection.maxCol &&
                          !occupiedSlots.has(slotId);
     }
     
@@ -149,7 +160,7 @@ const VideoGrid: React.FC<VideoGridProps> = ({
         />
       </div>
     );
-  }, [videos, occupiedSlots, onVideoView, selectedSlots, onSlotClick, isDragging, dragStart, dragEnd]);
+  }, [videos, occupiedSlots, onVideoView, selectedSlots, onSlotClick, dragSelection]);
 
   // Calculate slot size to fit entire grid on screen
   const slotSize = Math.min(dimensions.width / GRID_SIZE, dimensions.height / GRID_SIZE);
@@ -158,6 +169,7 @@ const VideoGrid: React.FC<VideoGridProps> = ({
 
   return (
     <div 
+      ref={containerRef}
       className="w-full h-full bg-background relative flex items-center justify-center overflow-hidden"
       style={{ cursor: isDragging ? 'crosshair' : 'default' }}
     >
@@ -175,8 +187,8 @@ const VideoGrid: React.FC<VideoGridProps> = ({
           rowCount={GRID_SIZE}
           rowHeight={slotSize}
           width={gridWidth}
-          overscanRowCount={0}
-          overscanColumnCount={0}
+          overscanRowCount={5}
+          overscanColumnCount={5}
         >
           {Cell}
         </Grid>

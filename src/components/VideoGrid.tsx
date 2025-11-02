@@ -64,8 +64,8 @@ const VideoGrid: React.FC<VideoGridProps> = ({
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     
-    const col = Math.floor(x / slotSize);
-    const row = Math.floor(y / slotSize);
+    const col = Math.floor((x / rect.width) * GRID_SIZE);
+    const row = Math.floor((y / rect.height) * GRID_SIZE);
     
     // Ensure we're within bounds
     if (col >= 0 && col < GRID_SIZE && row >= 0 && row < GRID_SIZE) {
@@ -86,8 +86,8 @@ const VideoGrid: React.FC<VideoGridProps> = ({
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     
-    const col = Math.max(0, Math.min(GRID_SIZE - 1, Math.floor(x / slotSize)));
-    const row = Math.max(0, Math.min(GRID_SIZE - 1, Math.floor(y / slotSize)));
+    const col = Math.max(0, Math.min(GRID_SIZE - 1, Math.floor((x / rect.width) * GRID_SIZE)));
+    const row = Math.max(0, Math.min(GRID_SIZE - 1, Math.floor((y / rect.height) * GRID_SIZE)));
     
     setDragEnd({ row, col });
   };
@@ -162,10 +162,9 @@ const VideoGrid: React.FC<VideoGridProps> = ({
     );
   }, [videos, occupiedSlots, onVideoView, selectedSlots, onSlotClick, dragSelection]);
 
-  // Calculate slot size to fit entire grid on screen
-  const slotSize = Math.min(dimensions.width / GRID_SIZE, dimensions.height / GRID_SIZE);
-  const gridWidth = GRID_SIZE * slotSize;
-  const gridHeight = GRID_SIZE * slotSize;
+  // Calculate slot sizes to fill entire viewport
+  const columnWidth = dimensions.width / GRID_SIZE;
+  const rowHeight = dimensions.height / GRID_SIZE;
 
   return (
     <div 
@@ -182,11 +181,11 @@ const VideoGrid: React.FC<VideoGridProps> = ({
         <Grid
           ref={gridRef}
           columnCount={GRID_SIZE}
-          columnWidth={slotSize}
-          height={gridHeight}
+          columnWidth={columnWidth}
+          height={dimensions.height}
           rowCount={GRID_SIZE}
-          rowHeight={slotSize}
-          width={gridWidth}
+          rowHeight={rowHeight}
+          width={dimensions.width}
           overscanRowCount={5}
           overscanColumnCount={5}
         >

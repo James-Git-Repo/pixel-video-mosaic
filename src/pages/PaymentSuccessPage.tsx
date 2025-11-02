@@ -1,36 +1,110 @@
 
 import React, { useEffect, useState } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
-import { CheckCircle, Upload, ArrowLeft } from 'lucide-react';
+import { useSearchParams, Link, useNavigate } from 'react-router-dom';
+import { CheckCircle, Upload, ArrowLeft, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const PaymentSuccessPage: React.FC = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const sessionId = searchParams.get('session_id');
   const [isProcessing, setIsProcessing] = useState(true);
+  const [verificationStatus, setVerificationStatus] = useState<'processing' | 'success' | 'failed'>('processing');
 
   useEffect(() => {
-    // Clear any stored selection data
-    localStorage.removeItem('msb:selected');
-    
-    // Simulate processing time
-    const timer = setTimeout(() => {
-      setIsProcessing(false);
-    }, 2000);
+    const verifyPayment = async () => {
+      if (!sessionId) {
+        setVerificationStatus('failed');
+        setIsProcessing(false);
+        return;
+      }
 
-    return () => clearTimeout(timer);
-  }, []);
+      // If it's a free code session, just mark as success
+      if (sessionId.startsWith('free_')) {
+        localStorage.removeItem('msb:selected');
+        setVerificationStatus('success');
+        setIsProcessing(false);
+        return;
+      }
 
-  if (isProcessing) {
+      try {
+        // Call verify-payment edge function to confirm with Stripe
+        const { data, error } = await supabase.functions.invoke('verify-payment', {
+          body: { sessionId }
+        });
+
+        if (error) throw error;
+
+        if (data?.verified) {
+          localStorage.removeItem('msb:selected');
+          setVerificationStatus('success');
+          toast.success('Payment verified successfully!');
+        } else {
+          setVerificationStatus('failed');
+          toast.error('Payment verification failed');
+        }
+      } catch (error) {
+        console.error('Payment verification error:', error);
+        setVerificationStatus('failed');
+        toast.error('Failed to verify payment');
+      } finally {
+        setIsProcessing(false);
+      }
+    };
+
+    verifyPayment();
+  }, [sessionId]);
+
+  if (isProcessing || verificationStatus === 'processing') {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
           <CardContent className="flex flex-col items-center justify-center p-8">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
-            <h2 className="text-lg font-semibold mb-2">Processing your payment...</h2>
+            <h2 className="text-lg font-semibold mb-2">Verifying your payment...</h2>
             <p className="text-muted-foreground text-center">
-              Please wait while we confirm your slot purchase.
+              Please wait while we confirm your purchase with Stripe.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (verificationStatus === 'failed') {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="max-w-md w-full">
+          <CardHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              <div className="rounded-full bg-destructive/10 p-3">
+                <XCircle className="w-8 h-8 text-destructive" />
+              </div>
+            </div>
+            <CardTitle className="text-2xl">Payment Verification Failed</CardTitle>
+          </CardHeader>
+          <CardContent className="text-center space-y-4">
+            <p className="text-muted-foreground">
+              We couldn't verify your payment. This could be a temporary issue.
+            </p>
+            <div className="space-y-3">
+              <Button onClick={() => navigate('/')} className="w-full">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Return to Billboard
+              </Button>
+              <Button 
+                onClick={() => window.location.reload()} 
+                variant="outline" 
+                className="w-full"
+              >
+                Try Again
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              If you were charged, please contact support with session ID: {sessionId}
             </p>
           </CardContent>
         </Card>

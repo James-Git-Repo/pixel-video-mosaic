@@ -30,9 +30,6 @@ const CanvasVideoGrid: React.FC<CanvasVideoGridProps> = ({
   const [dragStart, setDragStart] = useState<{ row: number; col: number } | null>(null);
   const [dragEnd, setDragEnd] = useState<{ row: number; col: number } | null>(null);
   const [hoveredSlot, setHoveredSlot] = useState<string | null>(null);
-  const [offset, setOffset] = useState({ x: 0, y: 0 });
-  const [isPanning, setIsPanning] = useState(false);
-  const [lastPanPos, setLastPanPos] = useState({ x: 0, y: 0 });
 
   // Calculate slot dimensions
   const slotWidth = dimensions.width / GRID_SIZE;
@@ -86,12 +83,6 @@ const CanvasVideoGrid: React.FC<CanvasVideoGridProps> = ({
     ctx.fillStyle = '#141414';
     ctx.fillRect(0, 0, dimensions.width, dimensions.height);
 
-    // Calculate visible area (with some buffer for smooth panning)
-    const startCol = Math.max(0, Math.floor(-offset.x / slotWidth) - 10);
-    const endCol = Math.min(GRID_SIZE, Math.ceil((-offset.x + dimensions.width) / slotWidth) + 10);
-    const startRow = Math.max(0, Math.floor(-offset.y / slotHeight) - 10);
-    const endRow = Math.min(GRID_SIZE, Math.ceil((-offset.y + dimensions.height) / slotHeight) + 10);
-
     // Calculate drag selection rectangle
     let dragSelection: Set<string> | null = null;
     if (isDragging && dragStart && dragEnd) {
@@ -108,17 +99,12 @@ const CanvasVideoGrid: React.FC<CanvasVideoGridProps> = ({
       }
     }
 
-    // Render visible slots
-    for (let row = startRow; row < endRow; row++) {
-      for (let col = startCol; col < endCol; col++) {
+    // Render all slots
+    for (let row = 0; row < GRID_SIZE; row++) {
+      for (let col = 0; col < GRID_SIZE; col++) {
         const slotId = getSlotFromCoords(col, row);
-        const x = col * slotWidth + offset.x;
-        const y = row * slotHeight + offset.y;
-
-        // Skip if completely outside viewport
-        if (x + slotWidth < 0 || x > dimensions.width || y + slotHeight < 0 || y > dimensions.height) {
-          continue;
-        }
+        const x = col * slotWidth;
+        const y = row * slotHeight;
 
         const isOccupied = occupiedSlots.has(slotId);
         const isSelected = selectedSlots.has(slotId) || dragSelection?.has(slotId);
@@ -151,8 +137,8 @@ const CanvasVideoGrid: React.FC<CanvasVideoGridProps> = ({
       const minCol = Math.min(dragStart.col, dragEnd.col);
       const maxCol = Math.max(dragStart.col, dragEnd.col);
 
-      const x = minCol * slotWidth + offset.x;
-      const y = minRow * slotHeight + offset.y;
+      const x = minCol * slotWidth;
+      const y = minRow * slotHeight;
       const width = (maxCol - minCol + 1) * slotWidth;
       const height = (maxRow - minRow + 1) * slotHeight;
 
@@ -160,7 +146,7 @@ const CanvasVideoGrid: React.FC<CanvasVideoGridProps> = ({
       ctx.lineWidth = 3;
       ctx.strokeRect(x, y, width, height);
     }
-  }, [dimensions, offset, occupiedSlots, selectedSlots, isDragging, dragStart, dragEnd, hoveredSlot, slotWidth, slotHeight, getSlotFromCoords]);
+  }, [dimensions, occupiedSlots, selectedSlots, isDragging, dragStart, dragEnd, hoveredSlot, slotWidth, slotHeight, getSlotFromCoords]);
 
   // Re-render on state changes
   useEffect(() => {
@@ -169,13 +155,6 @@ const CanvasVideoGrid: React.FC<CanvasVideoGridProps> = ({
 
   // Handle mouse down
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (e.button === 1 || e.button === 2) { // Middle or right click for panning
-      setIsPanning(true);
-      setLastPanPos({ x: e.clientX, y: e.clientY });
-      e.preventDefault();
-      return;
-    }
-
     const coords = getCoordsFromEvent(e);
     if (!coords) return;
 
@@ -186,17 +165,6 @@ const CanvasVideoGrid: React.FC<CanvasVideoGridProps> = ({
 
   // Handle mouse move
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (isPanning) {
-      const deltaX = e.clientX - lastPanPos.x;
-      const deltaY = e.clientY - lastPanPos.y;
-      setOffset(prev => ({
-        x: Math.min(0, Math.max(prev.x + deltaX, dimensions.width - GRID_SIZE * slotWidth)),
-        y: Math.min(0, Math.max(prev.y + deltaY, dimensions.height - GRID_SIZE * slotHeight))
-      }));
-      setLastPanPos({ x: e.clientX, y: e.clientY });
-      return;
-    }
-
     const coords = getCoordsFromEvent(e);
     if (!coords) {
       setHoveredSlot(null);
@@ -212,11 +180,6 @@ const CanvasVideoGrid: React.FC<CanvasVideoGridProps> = ({
 
   // Handle mouse up
   const handleMouseUp = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (isPanning) {
-      setIsPanning(false);
-      return;
-    }
-
     if (!isDragging || !dragStart || !dragEnd) return;
 
     // Calculate final selection
@@ -263,7 +226,7 @@ const CanvasVideoGrid: React.FC<CanvasVideoGridProps> = ({
     <div 
       ref={containerRef}
       className="w-full h-full overflow-hidden"
-      style={{ cursor: isPanning ? 'grabbing' : (isDragging ? 'crosshair' : 'default') }}
+      style={{ cursor: isDragging ? 'crosshair' : 'default' }}
     >
       <canvas
         ref={canvasRef}
@@ -274,7 +237,6 @@ const CanvasVideoGrid: React.FC<CanvasVideoGridProps> = ({
         onMouseUp={handleMouseUp}
         onMouseLeave={() => {
           setIsDragging(false);
-          setIsPanning(false);
           setHoveredSlot(null);
         }}
         onDoubleClick={handleDoubleClick}

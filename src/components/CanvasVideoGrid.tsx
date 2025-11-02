@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 
-const GRID_SIZE = 1000;
+const GRID_SIZE = 100;
 
 interface VideoData {
   [slotId: string]: string;

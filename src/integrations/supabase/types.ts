@@ -414,10 +414,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      clean_expired_reservations: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      clean_expired_reservations: { Args: never; Returns: undefined }
       create_slot_hold_atomic: {
         Args: {
           p_bottom_right: string
@@ -435,10 +432,7 @@ export type Database = {
         Args: { submission_id: string }
         Returns: undefined
       }
-      purge_expired_slot_holds: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      purge_expired_slot_holds: { Args: never; Returns: undefined }
     }
     Enums: {
       [_ in never]: never

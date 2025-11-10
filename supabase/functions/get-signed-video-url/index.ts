@@ -12,6 +12,30 @@ serve(async (req) => {
   }
 
   try {
+    // Get authenticated user
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "Unauthorized - no auth header" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401,
+      });
+    }
+
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    if (authError || !user) {
+      console.error('Auth error:', authError);
+      return new Response(JSON.stringify({ error: "Unauthorized - invalid token" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401,
+      });
+    }
+
     const { filePath } = await req.json();
 
     if (!filePath) {
@@ -21,18 +45,46 @@ serve(async (req) => {
       });
     }
 
-    const supabase = createClient(
+    // Verify user owns this video submission
+    const { data: submission, error: submissionError } = await supabaseClient
+      .from('video_submissions')
+      .select('user_id, video_url')
+      .eq('video_url', filePath)
+      .single();
+
+    if (submissionError || !submission) {
+      console.error('Submission not found:', submissionError);
+      return new Response(JSON.stringify({ error: "Video not found" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 404,
+      });
+    }
+
+    // Check ownership
+    if (submission.user_id !== user.id) {
+      console.error('Ownership check failed:', { submissionUserId: submission.user_id, requestUserId: user.id });
+      return new Response(JSON.stringify({ error: "Forbidden - not your video" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 403,
+      });
+    }
+
+    // Use service role to generate signed URL
+    const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
       { auth: { persistSession: false } }
     );
 
     // Generate signed URL with 5 minute expiry
-    const { data, error } = await supabase.storage
+    const { data, error } = await supabaseAdmin.storage
       .from('videos')
       .createSignedUrl(filePath, 300); // 5 minutes
 
-    if (error) throw error;
+    if (error) {
+      console.error('Signed URL error:', error);
+      throw error;
+    }
 
     return new Response(JSON.stringify({ signedUrl: data.signedUrl }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

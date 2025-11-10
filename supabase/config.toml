@@ -18,6 +18,9 @@ default_pool_size = 20
 max_client_conn = 100
 
 # Edge Functions
+[functions.get-signed-video-url]
+verify_jwt = true
+
 [functions.get-submission-from-session]
 verify_jwt = false
 

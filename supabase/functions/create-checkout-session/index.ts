@@ -81,7 +81,7 @@ serve(async (req) => {
 
     let totalAmount = pricing.amount_cents * slotIds.length;
 
-    // Apply discount code
+    // Apply discount code - validation happens server-side only
     const isFreeCode = discountCode === "xfgkqwhe9pèàlDòIJ2+QR0EI2";
     if (isFreeCode) {
       totalAmount = 0;

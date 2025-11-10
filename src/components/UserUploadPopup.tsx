@@ -73,10 +73,8 @@ const UserUploadPopup: React.FC<UserUploadPopupProps> = ({
   };
 
   const calculateTotal = () => {
-    // If valid promo code, make it free
-    if (promoCode.trim() === "xfgkqwhe9pèàlDòIJ2+QR0EI2") {
-      return 0;
-    }
+    // Server will validate promo code and determine final price
+    // Client should not know if code is valid
     return selectedSlots.length * 0.50; // $0.50 USD per slot
   };
 
@@ -125,7 +123,6 @@ const UserUploadPopup: React.FC<UserUploadPopupProps> = ({
     }
 
     setIsProcessing(true);
-    const isPromoCodeValid = promoCode.trim() === "xfgkqwhe9pèàlDòIJ2+QR0EI2";
 
     try {
       // First create a slot hold
@@ -138,8 +135,8 @@ const UserUploadPopup: React.FC<UserUploadPopupProps> = ({
 
       if (holdError) throw holdError;
 
-      // Check if using promo code for free checkout
-      if (isPromoCodeValid) {
+      // If promo code provided, try free checkout
+      if (promoCode.trim()) {
         const { data: freeData, error: freeError } = await supabase.functions.invoke('free-checkout', {
           body: {
             email: email,
@@ -149,16 +146,18 @@ const UserUploadPopup: React.FC<UserUploadPopupProps> = ({
           }
         });
 
-        if (freeError) throw freeError;
-
-        toast({
-          title: "Free submission created!",
-          description: "You'll receive an email with upload instructions soon.",
-        });
-
-        // Navigate to upload page with submission info
-        window.location.href = `/upload?free_checkout=true&submission_id=${freeData.submission_id}`;
-        return;
+        // If free checkout succeeds, redirect to upload
+        if (!freeError && freeData?.free_checkout) {
+          toast({
+            title: "Free submission created!",
+            description: "You'll receive an email with upload instructions soon.",
+          });
+          window.location.href = `/upload?free_checkout=true&submission_id=${freeData.submission_id}`;
+          return;
+        }
+        
+        // If promo code invalid, fall through to regular checkout
+        console.log('Promo code invalid or free checkout failed, proceeding with paid checkout');
       }
 
       // Regular paid checkout via Stripe
@@ -246,7 +245,7 @@ const UserUploadPopup: React.FC<UserUploadPopupProps> = ({
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium">Select Video Slots ($0.50 USD each)</label>
               <div className="text-sm text-muted-foreground">
-                Total: {calculateTotal() === 0 ? 'FREE' : `$${calculateTotal().toFixed(2)} USD`}
+                Total: ${calculateTotal().toFixed(2)} USD
               </div>
             </div>
             
@@ -350,9 +349,7 @@ const UserUploadPopup: React.FC<UserUploadPopupProps> = ({
             className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary hover:bg-primary/80 text-primary-foreground rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <CreditCard className="w-4 h-4" />
-            {isProcessing ? 'Processing...' : 
-             calculateTotal() === 0 ? 'Submit Free with Promo Code' : 
-             `Pay $${calculateTotal().toFixed(2)} with Stripe`}
+            {isProcessing ? 'Processing...' : `Pay $${calculateTotal().toFixed(2)} with Stripe`}
           </button>
         </div>
       </div>

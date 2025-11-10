@@ -11,6 +11,28 @@ const corsHeaders = {
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
+// Input validation helpers
+const validateUUID = (uuid: string): boolean => {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(uuid);
+};
+
+const validateEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
+const parseCoordinates = (coord: string): { row: number, col: number } | null => {
+  if (!coord || typeof coord !== 'string') return null;
+  const parts = coord.split('-');
+  if (parts.length !== 2) return null;
+  const row = parseInt(parts[0], 10);
+  const col = parseInt(parts[1], 10);
+  if (isNaN(row) || isNaN(col)) return null;
+  if (row < 0 || row > 999 || col < 0 || col > 999) return null;
+  return { row, col };
+};
+
 // Send thank-you email after successful payment
 async function sendThankYouEmail(email: string, amountCents: number, slotCount: number, topLeft: string, bottomRight: string) {
   if (!Deno.env.get("RESEND_API_KEY")) {
@@ -89,10 +111,10 @@ serve(async (req) => {
         });
       }
     } else {
-      // Handle direct verification calls for development
+      // Handle direct verification calls (development only)
       const { sessionId } = JSON.parse(body);
-      if (!sessionId) {
-        return new Response(JSON.stringify({ error: "Missing session ID" }), {
+      if (!sessionId || typeof sessionId !== 'string') {
+        return new Response(JSON.stringify({ error: "Invalid session ID" }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
           status: 400,
         });
@@ -100,7 +122,7 @@ serve(async (req) => {
       
       const session = await stripe.checkout.sessions.retrieve(sessionId);
       return new Response(JSON.stringify({ 
-        success: session.payment_status === "paid", 
+        verified: session.payment_status === "paid", 
         status: session.payment_status 
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -115,9 +137,21 @@ serve(async (req) => {
       if (session.payment_status === "paid") {
         const { user_id, hold_id, slot_count } = session.metadata;
         
-        if (!hold_id) {
-          console.error('No hold_id in session metadata');
-          return new Response(null, { status: 200 });
+        // Validate metadata
+        if (!user_id || !validateUUID(user_id)) {
+          console.error('Invalid user_id in metadata:', user_id);
+          return new Response(JSON.stringify({ error: "Invalid user_id format" }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 400,
+          });
+        }
+
+        if (!hold_id || !validateUUID(hold_id)) {
+          console.error('Invalid hold_id in metadata:', hold_id);
+          return new Response(JSON.stringify({ error: "Invalid hold_id format" }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 400,
+          });
         }
 
         // Get hold details
@@ -132,6 +166,29 @@ serve(async (req) => {
           return new Response(null, { status: 200 }); // Don't retry
         }
 
+        // Validate coordinates
+        const topLeft = parseCoordinates(hold.top_left);
+        const bottomRight = parseCoordinates(hold.bottom_right);
+        
+        if (!topLeft || !bottomRight) {
+          console.error('Invalid coordinate format:', { topLeft: hold.top_left, bottomRight: hold.bottom_right });
+          return new Response(JSON.stringify({ error: "Invalid coordinate format" }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 400,
+          });
+        }
+
+        const width = bottomRight.col - topLeft.col + 1;
+        const height = bottomRight.row - topLeft.row + 1;
+
+        if (width < 1 || height < 1 || width > 1000 || height > 1000) {
+          console.error('Invalid slot dimensions:', { width, height });
+          return new Response(JSON.stringify({ error: "Invalid slot dimensions" }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 400,
+          });
+        }
+
         // Recompute slot count server-side for security
         const { count: actualSlotCount, error: countError } = await supabase
           .from('slot_hold_items')
@@ -143,16 +200,34 @@ serve(async (req) => {
           return new Response(null, { status: 200 });
         }
 
+        if (actualSlotCount < 1 || actualSlotCount > 1000000) {
+          console.error('Invalid slot count:', actualSlotCount);
+          return new Response(JSON.stringify({ error: "Invalid slot count" }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 400,
+          });
+        }
+
+        // Validate email
+        const customerEmail = session.customer_details?.email;
+        if (!customerEmail || !validateEmail(customerEmail)) {
+          console.error('Invalid or missing customer email:', customerEmail);
+          return new Response(JSON.stringify({ error: "Invalid email address" }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 400,
+          });
+        }
+
         // Create video submission
         const { data: submission, error: submissionError } = await supabase
           .from('video_submissions')
           .insert({
             user_id: user_id,
-            email: session.customer_details?.email || 'unknown@example.com',
+            email: customerEmail,
             top_left: hold.top_left,
             bottom_right: hold.bottom_right,
-            width: hold.bottom_right.split('-')[1] - hold.top_left.split('-')[1] + 1,
-            height: hold.bottom_right.split('-')[0] - hold.top_left.split('-')[0] + 1,
+            width: width,
+            height: height,
             amount_cents: actualSlotCount * 50,
             currency: 'USD',
             payment_intent_id: session.payment_intent,

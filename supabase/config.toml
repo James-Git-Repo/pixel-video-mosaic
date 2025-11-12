@@ -25,13 +25,13 @@ verify_jwt = true
 verify_jwt = false
 
 [functions.create-slot-hold]
-verify_jwt = true
+verify_jwt = false
 
 [functions.create-checkout]
-verify_jwt = true
+verify_jwt = false
 
 [functions.free-checkout]
-verify_jwt = true
+verify_jwt = false
 
 [functions.verify-payment]
 verify_jwt = false

@@ -19,25 +19,24 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    // Authenticate user
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "No authorization header" }), {
+    const { email, top_left, bottom_right, slot_ids } = await req.json();
+
+    // Validate email format
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return new Response(JSON.stringify({ error: "Valid email required" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 401,
+        status: 400,
       });
     }
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-    if (userError || !userData.user) {
-      return new Response(JSON.stringify({ error: "Authentication failed" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 401,
-      });
-    }
-
-    const { top_left, bottom_right, slot_ids } = await req.json();
+    // Generate deterministic anonymous user ID from email
+    const encoder = new TextEncoder();
+    const data = encoder.encode(email.toLowerCase().trim());
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const anonymousUserId = hashArray.slice(0, 16)
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
 
     // Validate input format
     if (!top_left || !bottom_right) {
@@ -83,7 +82,7 @@ serve(async (req) => {
 
     // Use the atomic function for slot reservation
     const { data: result, error: atomicError } = await supabaseClient.rpc('create_slot_hold_atomic', {
-      p_user_id: userData.user.id,
+      p_user_id: anonymousUserId,
       p_top_left: top_left,
       p_bottom_right: bottom_right,
       p_slot_ids: expectedSlotIds,
@@ -106,6 +105,14 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 500,
       });
+    }
+
+    // Update hold with email for tracking
+    if (result && result[0]) {
+      await supabaseClient
+        .from('slot_holds')
+        .update({ email: email })
+        .eq('id', result[0].hold_id);
     }
 
     return new Response(JSON.stringify({

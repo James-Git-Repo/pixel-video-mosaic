@@ -135,16 +135,17 @@ serve(async (req) => {
       const session = event.data.object as any;
       
       if (session.payment_status === "paid") {
-        const { user_id, hold_id, slot_count } = session.metadata;
-        
-        // Validate metadata
-        if (!user_id || !validateUUID(user_id)) {
-          console.error('Invalid user_id in metadata:', user_id);
-          return new Response(JSON.stringify({ error: "Invalid user_id format" }), {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-            status: 400,
-          });
-        }
+    // Extract and validate metadata
+    const { user_id, hold_id, slot_count, top_left, bottom_right, linked_url, email } = session.metadata;
+    
+    // user_id can be anonymous hash (32 chars) or UUID (36 chars)
+    if (!user_id || user_id.length < 16) {
+      console.error('Invalid user_id in metadata:', user_id);
+      return new Response(JSON.stringify({ error: "Invalid user_id format" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
+      });
+    }
 
         if (!hold_id || !validateUUID(hold_id)) {
           console.error('Invalid hold_id in metadata:', hold_id);
@@ -208,8 +209,8 @@ serve(async (req) => {
           });
         }
 
-        // Validate email
-        const customerEmail = session.customer_details?.email;
+        // Validate customer email (check metadata first, then customer_details)
+        const customerEmail = email || session.customer_details?.email;
         if (!customerEmail || !validateEmail(customerEmail)) {
           console.error('Invalid or missing customer email:', customerEmail);
           return new Response(JSON.stringify({ error: "Invalid email address" }), {

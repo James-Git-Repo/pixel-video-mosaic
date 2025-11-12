@@ -20,25 +20,15 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    // Authenticate user
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "No authorization header" }), {
+    const { hold_id, email, linked_url } = await req.json();
+
+    // Validate email format
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return new Response(JSON.stringify({ error: "Valid email required" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 401,
+        status: 400,
       });
     }
-
-    const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-    if (userError || !userData.user) {
-      return new Response(JSON.stringify({ error: "Authentication failed" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 401,
-      });
-    }
-
-    const { hold_id } = await req.json();
 
     if (!hold_id) {
       return new Response(JSON.stringify({ error: "Missing hold_id" }), {
@@ -47,12 +37,12 @@ serve(async (req) => {
       });
     }
 
-    // Validate hold
+    // Validate hold exists and matches email
     const { data: hold, error: holdError } = await supabaseClient
       .from('slot_holds')
       .select('*')
       .eq('id', hold_id)
-      .eq('user_id', userData.user.id)
+      .eq('email', email)
       .single();
 
     if (holdError || !hold) {
@@ -97,7 +87,7 @@ serve(async (req) => {
 
     // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
-      customer_email: userData.user.email,
+      customer_email: email,
       line_items: [
         {
           price_data: {
@@ -115,9 +105,13 @@ serve(async (req) => {
       success_url: `${siteUrl}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${siteUrl}/payment-cancelled`,
       metadata: {
-        user_id: userData.user.id,
+        user_id: hold.user_id || 'anonymous',
         hold_id: hold_id,
         slot_count: slotCount.toString(),
+        top_left: hold.top_left,
+        bottom_right: hold.bottom_right,
+        linked_url: linked_url || '',
+        email: email,
       },
       automatic_tax: {
         enabled: true,

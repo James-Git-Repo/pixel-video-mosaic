@@ -273,6 +273,7 @@ export type Database = {
           bottom_right: string | null
           checkout_session_id: string | null
           created_at: string | null
+          email: string | null
           expires_at: string | null
           id: string
           top_left: string | null
@@ -282,6 +283,7 @@ export type Database = {
           bottom_right?: string | null
           checkout_session_id?: string | null
           created_at?: string | null
+          email?: string | null
           expires_at?: string | null
           id?: string
           top_left?: string | null
@@ -291,6 +293,7 @@ export type Database = {
           bottom_right?: string | null
           checkout_session_id?: string | null
           created_at?: string | null
+          email?: string | null
           expires_at?: string | null
           id?: string
           top_left?: string | null

@@ -125,22 +125,39 @@ const UserUploadPopup: React.FC<UserUploadPopupProps> = ({
     setIsProcessing(true);
 
     try {
-      // First create a slot hold
-      const { data: holdData, error: holdError } = await supabase.functions.invoke('create-slot-hold', {
+      // Calculate bounding box from selected slots
+      const rows = selectedSlots.map(s => parseInt(s.split('-')[0]));
+      const cols = selectedSlots.map(s => parseInt(s.split('-')[1]));
+      const minRow = Math.min(...rows);
+      const maxRow = Math.max(...rows);
+      const minCol = Math.min(...cols);
+      const maxCol = Math.max(...cols);
+      
+      const topLeft = `${minRow}-${minCol}`;
+      const bottomRight = `${maxRow}-${maxCol}`;
+
+      // Create slot hold with email (no authentication needed)
+      const { data, error } = await supabase.functions.invoke('create-slot-hold', {
         body: {
-          slots: selectedSlots,
+          email: email,
+          top_left: topLeft,
+          bottom_right: bottomRight,
+          slot_ids: selectedSlots,
           expires_minutes: 15
         }
       });
 
-      if (holdError) throw holdError;
+      if (error || !data || !data.hold_id) {
+        console.error('Hold creation failed:', error);
+        throw new Error(error?.message || 'Failed to reserve slots');
+      }
 
       // If promo code provided, try free checkout
       if (promoCode.trim()) {
         const { data: freeData, error: freeError } = await supabase.functions.invoke('free-checkout', {
           body: {
             email: email,
-            hold_id: holdData.hold_id,
+            hold_id: data.hold_id,
             promo_code: promoCode.trim(),
             linked_url: linkedUrl || null
           }
@@ -150,27 +167,29 @@ const UserUploadPopup: React.FC<UserUploadPopupProps> = ({
         if (!freeError && freeData?.free_checkout) {
           toast({
             title: "Free submission created!",
-            description: "You'll receive an email with upload instructions soon.",
+            description: "Redirecting to upload page...",
           });
-          window.location.href = `/upload?free_checkout=true&submission_id=${freeData.submission_id}`;
+          window.location.href = `/upload?submission_id=${freeData.submission_id}`;
           return;
         }
         
         // If promo code invalid, fall through to regular checkout
-        console.log('Promo code invalid or free checkout failed, proceeding with paid checkout');
+        console.log('Promo code invalid, proceeding with paid checkout');
       }
 
       // Regular paid checkout via Stripe
       const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke('create-checkout', {
         body: {
-          hold_id: holdData.hold_id,
+          hold_id: data.hold_id,
           email: email,
-          slot_count: selectedSlots.length,
           linked_url: linkedUrl || null
         }
       });
 
-      if (checkoutError) throw checkoutError;
+      if (checkoutError || !checkoutData || !checkoutData.url) {
+        console.error('Checkout creation failed:', checkoutError);
+        throw new Error(checkoutError?.message || 'Failed to create checkout');
+      }
 
       // Redirect to Stripe checkout
       window.location.href = checkoutData.url;

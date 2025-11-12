@@ -26,29 +26,21 @@ serve(async (req) => {
   }
 
   try {
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Authentication required" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 401,
-      });
-    }
-
-    const supabase = createClient(
+    const adminClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-      { global: { headers: { Authorization: authHeader } } }
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false } }
     );
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
-      return new Response(JSON.stringify({ error: "Authentication failed" }), {
+    const { email, hold_id, promo_code, linked_url } = await req.json();
+
+    // Validate email format
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return new Response(JSON.stringify({ error: "Valid email required" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 401,
+        status: 400,
       });
     }
-
-    const { email, hold_id, promo_code } = await req.json();
 
     // Validate promo code with constant-time comparison
     if (!constantTimeCompare(promo_code, VALID_PROMO_CODE)) {
@@ -59,12 +51,12 @@ serve(async (req) => {
       });
     }
 
-    // Verify hold exists and belongs to user
-    const { data: hold, error: holdError } = await supabase
+    // Verify hold exists and matches email
+    const { data: hold, error: holdError } = await adminClient
       .from('slot_holds')
       .select('*')
       .eq('id', hold_id)
-      .eq('user_id', user.id)
+      .eq('email', email)
       .single();
 
     if (holdError || !hold) {
@@ -75,7 +67,7 @@ serve(async (req) => {
     }
 
     // Count slots for this hold
-    const { count: slotCount, error: countError } = await supabase
+    const { count: slotCount, error: countError } = await adminClient
       .from('slot_hold_items')
       .select('*', { count: 'exact' })
       .eq('hold_id', hold_id);
@@ -87,25 +79,38 @@ serve(async (req) => {
       });
     }
 
-    // Use service role to create submission
-    const adminClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      { auth: { persistSession: false } }
-    );
+    // Build slots JSON array
+    const { data: slotItems } = await adminClient
+      .from('slot_hold_items')
+      .select('slot_id')
+      .eq('hold_id', hold_id);
+
+    const slotsJson = slotItems?.map(item => item.slot_id) || [];
+
+    // Generate anonymous user ID from email
+    const encoder = new TextEncoder();
+    const data = encoder.encode(email.toLowerCase().trim());
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const anonymousUserId = hashArray.slice(0, 16)
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
 
     // Create free video submission
     const { data: submission, error: submissionError } = await adminClient
       .from('video_submissions')
       .insert({
-        user_id: user.id,
-        email: email || user.email,
+        user_id: anonymousUserId,
+        email: email,
         top_left: hold.top_left,
         bottom_right: hold.bottom_right,
+        slots: slotsJson,
         amount_cents: 0,
+        amount_paid: 0,
         currency: 'usd',
         payment_intent_id: 'FREE-CODE',
-        status: 'under_review',
+        status: 'pending_payment',
+        linked_url: linked_url || null,
       })
       .select()
       .single();

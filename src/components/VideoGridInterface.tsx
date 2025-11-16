@@ -20,7 +20,7 @@ const VideoGridInterface: React.FC = () => {
   const [currentViewedVideo, setCurrentViewedVideo] = useState<{slotId: string, video: string} | null>(null);
   const [videos, setVideos] = useState<{ [slotId: string]: string }>({});
   const [occupiedSlots, setOccupiedSlots] = useState<Set<string>>(new Set());
-  const [welcomeVideo, setWelcomeVideo] = useState<string | null>(null);
+  const [welcomeVideo, setWelcomeVideo] = useState<string | null>('/intro-video.mp4');
   const [isNavOpen, setIsNavOpen] = useState(false);
   const { toast } = useToast();
 

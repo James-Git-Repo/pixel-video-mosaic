@@ -209,6 +209,33 @@ export type Database = {
         }
         Relationships: []
       }
+      promo_code_attempts: {
+        Row: {
+          attempted_at: string
+          created_at: string
+          email: string
+          id: string
+          ip_address: string
+          success: boolean
+        }
+        Insert: {
+          attempted_at?: string
+          created_at?: string
+          email: string
+          id?: string
+          ip_address: string
+          success?: boolean
+        }
+        Update: {
+          attempted_at?: string
+          created_at?: string
+          email?: string
+          id?: string
+          ip_address?: string
+          success?: boolean
+        }
+        Relationships: []
+      }
       reservations: {
         Row: {
           amount_cents: number
@@ -418,6 +445,7 @@ export type Database = {
     }
     Functions: {
       clean_expired_reservations: { Args: never; Returns: undefined }
+      cleanup_old_promo_attempts: { Args: never; Returns: undefined }
       create_slot_hold_atomic: {
         Args: {
           p_bottom_right: string

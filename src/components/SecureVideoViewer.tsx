@@ -16,8 +16,14 @@ const SecureVideoViewer: React.FC<SecureVideoViewerProps> = ({ slotId, filePath,
   useEffect(() => {
     const fetchSignedUrl = async () => {
       try {
+        // Get email from localStorage (set during checkout)
+        const userEmail = localStorage.getItem('userEmail');
+        if (!userEmail) {
+          throw new Error('Email not found. Please complete checkout again.');
+        }
+
         const { data, error } = await supabase.functions.invoke('get-signed-video-url', {
-          body: { filePath }
+          body: { filePath, email: userEmail }
         });
 
         if (error) throw error;

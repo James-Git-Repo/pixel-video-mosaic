@@ -19,7 +19,7 @@ max_client_conn = 100
 
 # Edge Functions
 [functions.get-signed-video-url]
-verify_jwt = true
+verify_jwt = false
 
 [functions.get-submission-from-session]
 verify_jwt = false

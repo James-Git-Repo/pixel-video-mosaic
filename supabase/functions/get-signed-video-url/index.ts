@@ -12,69 +12,54 @@ serve(async (req) => {
   }
 
   try {
-    // Get authenticated user
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Unauthorized - no auth header" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 401,
-      });
-    }
+    const { filePath, email } = await req.json();
 
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-      { global: { headers: { Authorization: authHeader } } }
-    );
-
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
-    if (authError || !user) {
-      console.error('Auth error:', authError);
-      return new Response(JSON.stringify({ error: "Unauthorized - invalid token" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 401,
-      });
-    }
-
-    const { filePath } = await req.json();
-
-    if (!filePath) {
-      return new Response(JSON.stringify({ error: "File path is required" }), {
+    if (!filePath || !email) {
+      return new Response(JSON.stringify({ error: "File path and email are required" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,
       });
     }
 
+    // Hash email to match user_id format (same as create-slot-hold)
+    const encoder = new TextEncoder();
+    const data = encoder.encode(email.toLowerCase().trim());
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashedUserId = hashArray.slice(0, 16)
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+
+    // Use service role to query submission and verify ownership
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false } }
+    );
+
     // Verify user owns this video submission
-    const { data: submission, error: submissionError } = await supabaseClient
+    const { data: submission, error: submissionError } = await supabaseAdmin
       .from('video_submissions')
       .select('user_id, video_url')
       .eq('video_url', filePath)
       .single();
 
     if (submissionError || !submission) {
-      console.error('Submission not found:', submissionError);
+      console.error('Submission not found');
       return new Response(JSON.stringify({ error: "Video not found" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 404,
       });
     }
 
-    // Check ownership
-    if (submission.user_id !== user.id) {
-      console.error('Ownership check failed:', { submissionUserId: submission.user_id, requestUserId: user.id });
+    // Check ownership by comparing hashed email with submission user_id
+    if (submission.user_id !== hashedUserId) {
+      console.error('Ownership check failed');
       return new Response(JSON.stringify({ error: "Forbidden - not your video" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 403,
       });
     }
-
-    // Use service role to generate signed URL
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      { auth: { persistSession: false } }
-    );
 
     // Generate signed URL with 5 minute expiry
     const { data, error } = await supabaseAdmin.storage

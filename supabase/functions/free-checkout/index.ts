@@ -1,15 +1,24 @@
 // supabase/functions/free-checkout/index.ts
-// TESTING: POST with { email, slots, promo_code: "xfgkqwhe9pèàlDòIJ2+QR0EI2" } → creates free submission
+// TESTING: POST with { email, slots, promo_code } → creates free submission
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Input validation schema
+const FreeCheckoutSchema = z.object({
+  email: z.string().email().max(255),
+  hold_id: z.string().uuid(),
+  promo_code: z.string().min(1).max(100),
+  linked_url: z.string().url().max(2048).optional().or(z.literal('')),
+});
+
 // Use constant-time comparison for security
-const VALID_PROMO_CODE = "xfgkqwhe9pèàlDòIJ2+QR0EI2";
+const VALID_PROMO_CODE = Deno.env.get("PROMO_CODE_FREE") || "";
 
 function constantTimeCompare(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
@@ -32,19 +41,22 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    const { email, hold_id, promo_code, linked_url } = await req.json();
-
-    // Validate email format
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return new Response(JSON.stringify({ error: "Valid email required" }), {
+    const body = await req.json();
+    
+    // Validate input using Zod schema
+    const validation = FreeCheckoutSchema.safeParse(body);
+    if (!validation.success) {
+      return new Response(JSON.stringify({ error: "Invalid input" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,
       });
     }
 
+    const { email, hold_id, promo_code, linked_url } = validation.data;
+
     // Validate promo code with constant-time comparison
-    if (!constantTimeCompare(promo_code, VALID_PROMO_CODE)) {
-      console.log(`Invalid promo code attempt: ${promo_code?.substring(0, 5)}...`);
+    if (!VALID_PROMO_CODE || !constantTimeCompare(promo_code, VALID_PROMO_CODE)) {
+      console.log('Invalid promo code attempt');
       return new Response(JSON.stringify({ error: "Invalid promo code" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,

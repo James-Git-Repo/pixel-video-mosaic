@@ -49,7 +49,6 @@ const UploadPage: React.FC = () => {
       
       setSubmission(data.submission);
     } catch (error) {
-      console.error('Error fetching submission:', error);
       toast({
         title: "Error",
         description: "Could not load your submission details",

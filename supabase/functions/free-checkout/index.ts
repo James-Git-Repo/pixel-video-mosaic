@@ -152,7 +152,7 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error("Error in free-checkout:", error);
+    console.error('Free checkout failed');
     return new Response(JSON.stringify({ error: "Server error" }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,

@@ -137,7 +137,7 @@ serve(async (req) => {
       .eq('id', hold_id);
 
     if (updateError) {
-      console.error('Error updating hold with session ID:', updateError);
+      console.error('Failed to update hold with session ID');
       // Continue anyway, as the session was created successfully
     }
 
@@ -147,7 +147,7 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('Error in create-checkout:', error);
+    console.error('Checkout creation failed');
     return new Response(JSON.stringify({ error: "Failed to create checkout session" }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,

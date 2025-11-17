@@ -10,18 +10,36 @@ serve(async (req) => {
   try {
     const signature = req.headers.get("stripe-signature");
     const body = await req.text();
-    
-    if (!signature) {
-      throw new Error("No Stripe signature found");
-    }
-
     const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
-    if (!webhookSecret) {
-      throw new Error("Stripe webhook secret not configured");
+    
+    if (!signature || !webhookSecret) {
+      console.error('Webhook validation failed:', { 
+        hasSignature: !!signature, 
+        hasSecret: !!webhookSecret 
+      });
+      return new Response(
+        JSON.stringify({ error: "Invalid webhook request" }), 
+        {
+          headers: { "Content-Type": "application/json" },
+          status: 400,
+        }
+      );
     }
 
     // Verify the webhook signature
-    const event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+    let event;
+    try {
+      event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+    } catch (err) {
+      console.error('Webhook signature verification failed:', err);
+      return new Response(
+        JSON.stringify({ error: "Invalid webhook request" }), 
+        {
+          headers: { "Content-Type": "application/json" },
+          status: 400,
+        }
+      );
+    }
 
     // Create service role client
     const supabase = createClient(

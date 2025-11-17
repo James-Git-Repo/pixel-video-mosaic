@@ -261,7 +261,7 @@ serve(async (req) => {
     return new Response(null, { status: 200 });
 
   } catch (error) {
-    console.error('Error in verify-payment webhook:', error);
+    console.error('Payment verification failed');
     return new Response(JSON.stringify({ error: "Webhook processing failed" }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,

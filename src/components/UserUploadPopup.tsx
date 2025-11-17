@@ -187,18 +187,16 @@ const UserUploadPopup: React.FC<UserUploadPopupProps> = ({
       });
 
       if (checkoutError || !checkoutData || !checkoutData.url) {
-        console.error('Checkout creation failed:', checkoutError);
-        throw new Error(checkoutError?.message || 'Failed to create checkout');
+        throw new Error('Failed to create checkout');
       }
 
       // Redirect to Stripe checkout
       window.location.href = checkoutData.url;
 
     } catch (error: any) {
-      console.error('Error creating submission:', error);
       toast({
         title: "Submission failed",
-        description: error.message || "There was an error creating your submission",
+        description: "There was an error creating your submission",
         variant: "destructive",
       });
     } finally {

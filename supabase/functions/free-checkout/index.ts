@@ -29,6 +29,72 @@ function constantTimeCompare(a: string, b: string): boolean {
   return result === 0;
 }
 
+// Extract client IP from request headers
+function getClientIp(req: Request): string {
+  const forwarded = req.headers.get('x-forwarded-for');
+  if (forwarded) {
+    return forwarded.split(',')[0].trim();
+  }
+  const realIp = req.headers.get('x-real-ip');
+  return realIp || 'unknown';
+}
+
+// Check rate limiting for promo code attempts
+async function checkRateLimit(
+  supabase: any,
+  ip: string,
+  email: string
+): Promise<{ allowed: boolean; reason?: string }> {
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+
+  // Check failed attempts by IP (max 5 per hour)
+  const { count: ipAttempts, error: ipError } = await supabase
+    .from('promo_code_attempts')
+    .select('*', { count: 'exact', head: true })
+    .eq('ip_address', ip)
+    .eq('success', false)
+    .gte('attempted_at', oneHourAgo);
+
+  if (ipError) throw ipError;
+  if (ipAttempts && ipAttempts >= 5) {
+    return { allowed: false, reason: 'IP rate limit exceeded' };
+  }
+
+  // Check failed attempts by email (max 3 per hour)
+  const { count: emailAttempts, error: emailError } = await supabase
+    .from('promo_code_attempts')
+    .select('*', { count: 'exact', head: true })
+    .eq('email', email)
+    .eq('success', false)
+    .gte('attempted_at', oneHourAgo);
+
+  if (emailError) throw emailError;
+  if (emailAttempts && emailAttempts >= 3) {
+    return { allowed: false, reason: 'Email rate limit exceeded' };
+  }
+
+  return { allowed: true };
+}
+
+// Log promo code attempt
+async function logPromoAttempt(
+  supabase: any,
+  ip: string,
+  email: string,
+  success: boolean
+): Promise<void> {
+  await supabase.from('promo_code_attempts').insert({
+    ip_address: ip,
+    email: email,
+    success: success,
+  });
+
+  // Cleanup old records on successful attempt
+  if (success) {
+    await supabase.rpc('cleanup_old_promo_attempts');
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -54,8 +120,32 @@ serve(async (req) => {
 
     const { email, hold_id, promo_code, linked_url } = validation.data;
 
+    // Extract client IP for rate limiting
+    const clientIp = getClientIp(req);
+
+    // Check rate limiting
+    const rateLimitCheck = await checkRateLimit(adminClient, clientIp, email);
+    if (!rateLimitCheck.allowed) {
+      console.log(`Rate limit exceeded for IP: ${clientIp}, reason: ${rateLimitCheck.reason}`);
+      
+      // Log blocked attempt (doesn't count toward limit)
+      await logPromoAttempt(adminClient, clientIp, email, false);
+      
+      return new Response(JSON.stringify({ 
+        error: "Too many attempts. Please try again later." 
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 429,
+      });
+    }
+
     // Validate promo code with constant-time comparison
-    if (!VALID_PROMO_CODE || !constantTimeCompare(promo_code, VALID_PROMO_CODE)) {
+    const isValidPromo = VALID_PROMO_CODE && constantTimeCompare(promo_code, VALID_PROMO_CODE);
+
+    // Log attempt
+    await logPromoAttempt(adminClient, clientIp, email, isValidPromo);
+
+    if (!isValidPromo) {
       console.log('Invalid promo code attempt');
       return new Response(JSON.stringify({ error: "Invalid promo code" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

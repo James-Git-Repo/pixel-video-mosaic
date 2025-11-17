@@ -84,74 +84,6 @@ export type Database = {
           },
         ]
       }
-      order_slots: {
-        Row: {
-          order_id: string
-          slot_id: string
-        }
-        Insert: {
-          order_id: string
-          slot_id: string
-        }
-        Update: {
-          order_id?: string
-          slot_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "order_slots_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "orders"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "order_slots_slot_id_fkey"
-            columns: ["slot_id"]
-            isOneToOne: false
-            referencedRelation: "slots"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      orders: {
-        Row: {
-          amount_cents: number
-          created_at: string
-          id: string
-          reservation_id: string | null
-          slot_count: number
-          term: string
-          user_id: string
-        }
-        Insert: {
-          amount_cents: number
-          created_at?: string
-          id?: string
-          reservation_id?: string | null
-          slot_count: number
-          term: string
-          user_id: string
-        }
-        Update: {
-          amount_cents?: number
-          created_at?: string
-          id?: string
-          reservation_id?: string | null
-          slot_count?: number
-          term?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "orders_reservation_id_fkey"
-            columns: ["reservation_id"]
-            isOneToOne: false
-            referencedRelation: "reservations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       pricing: {
         Row: {
           amount_cents: number
@@ -233,39 +165,6 @@ export type Database = {
           id?: string
           ip_address?: string
           success?: boolean
-        }
-        Relationships: []
-      }
-      reservations: {
-        Row: {
-          amount_cents: number
-          created_at: string
-          expires_at: string
-          id: string
-          slot_count: number
-          status: string
-          term: string
-          user_id: string
-        }
-        Insert: {
-          amount_cents: number
-          created_at?: string
-          expires_at?: string
-          id?: string
-          slot_count: number
-          status?: string
-          term: string
-          user_id: string
-        }
-        Update: {
-          amount_cents?: number
-          created_at?: string
-          expires_at?: string
-          id?: string
-          slot_count?: number
-          status?: string
-          term?: string
-          user_id?: string
         }
         Relationships: []
       }
@@ -444,7 +343,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      clean_expired_reservations: { Args: never; Returns: undefined }
       cleanup_old_promo_attempts: { Args: never; Returns: undefined }
       create_slot_hold_atomic: {
         Args: {

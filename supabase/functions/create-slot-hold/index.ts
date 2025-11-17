@@ -92,9 +92,10 @@ serve(async (req) => {
       }
     }
 
-    // Use the atomic function for slot reservation
+    // Use the atomic function for slot reservation with email included
     const { data: result, error: atomicError } = await supabaseClient.rpc('create_slot_hold_atomic', {
       p_user_id: anonymousUserId,
+      p_email: email,
       p_top_left: top_left,
       p_bottom_right: bottom_right,
       p_slot_ids: expectedSlotIds,
@@ -117,14 +118,6 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 500,
       });
-    }
-
-    // Update hold with email for tracking
-    if (result && result[0]) {
-      await supabaseClient
-        .from('slot_holds')
-        .update({ email: email })
-        .eq('id', result[0].hold_id);
     }
 
     return new Response(JSON.stringify({

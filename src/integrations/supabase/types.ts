@@ -344,19 +344,34 @@ export type Database = {
     }
     Functions: {
       cleanup_old_promo_attempts: { Args: never; Returns: undefined }
-      create_slot_hold_atomic: {
-        Args: {
-          p_bottom_right: string
-          p_expires_minutes?: number
-          p_slot_ids: string[]
-          p_top_left: string
-          p_user_id: string
-        }
-        Returns: {
-          expires_at: string
-          hold_id: string
-        }[]
-      }
+      create_slot_hold_atomic:
+        | {
+            Args: {
+              p_bottom_right: string
+              p_email: string
+              p_expires_minutes?: number
+              p_slot_ids: string[]
+              p_top_left: string
+              p_user_id: string
+            }
+            Returns: {
+              expires_at: string
+              hold_id: string
+            }[]
+          }
+        | {
+            Args: {
+              p_bottom_right: string
+              p_expires_minutes?: number
+              p_slot_ids: string[]
+              p_top_left: string
+              p_user_id: string
+            }
+            Returns: {
+              expires_at: string
+              hold_id: string
+            }[]
+          }
       free_occupied_slots: {
         Args: { submission_id: string }
         Returns: undefined

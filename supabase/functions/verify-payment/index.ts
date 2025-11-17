@@ -66,7 +66,7 @@ async function sendThankYouEmail(email: string, amountCents: number, slotCount: 
     });
     console.log(`Thank-you email sent to ${email}`);
   } catch (error) {
-    console.error("Email send failed:", error);
+    console.error("Email send failed");
     throw error;
   }
 }
@@ -104,7 +104,7 @@ serve(async (req) => {
       try {
         event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
       } catch (err) {
-        console.error('Webhook signature verification failed:', err);
+        console.error('Webhook signature verification failed');
         return new Response(JSON.stringify({ error: "Invalid signature" }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
           status: 400,

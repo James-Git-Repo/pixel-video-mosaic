@@ -1,11 +1,19 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Input validation schema
+const CreateCheckoutSchema = z.object({
+  hold_id: z.string().uuid(),
+  email: z.string().email().max(255),
+  linked_url: z.string().url().max(2048).optional().or(z.literal('')),
+});
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -20,15 +28,18 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    const { hold_id, email, linked_url } = await req.json();
-
-    // Validate email format
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return new Response(JSON.stringify({ error: "Valid email required" }), {
+    const body = await req.json();
+    
+    // Validate input using Zod schema
+    const validation = CreateCheckoutSchema.safeParse(body);
+    if (!validation.success) {
+      return new Response(JSON.stringify({ error: "Invalid input" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,
       });
     }
+
+    const { hold_id, email, linked_url } = validation.data;
 
     if (!hold_id) {
       return new Response(JSON.stringify({ error: "Missing hold_id" }), {

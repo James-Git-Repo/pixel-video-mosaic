@@ -1,10 +1,19 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Input validation schema
+const SlotHoldSchema = z.object({
+  email: z.string().email().max(255),
+  top_left: z.string().regex(/^\d{1,3}-\d{1,3}$/).max(10),
+  bottom_right: z.string().regex(/^\d{1,3}-\d{1,3}$/).max(10),
+  slot_ids: z.array(z.string().max(10)).optional(),
+});
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -19,15 +28,18 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    const { email, top_left, bottom_right, slot_ids } = await req.json();
-
-    // Validate email format
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return new Response(JSON.stringify({ error: "Valid email required" }), {
+    const body = await req.json();
+    
+    // Validate input using Zod schema
+    const validation = SlotHoldSchema.safeParse(body);
+    if (!validation.success) {
+      return new Response(JSON.stringify({ error: "Invalid input" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,
       });
     }
+
+    const { email, top_left, bottom_right, slot_ids } = validation.data;
 
     // Generate deterministic anonymous user ID from email
     const encoder = new TextEncoder();
@@ -100,7 +112,7 @@ serve(async (req) => {
         });
       }
       
-      console.error('Atomic function error:', atomicError);
+      console.error('Slot hold creation failed:', atomicError.code);
       return new Response(JSON.stringify({ error: "Failed to reserve slots" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 500,

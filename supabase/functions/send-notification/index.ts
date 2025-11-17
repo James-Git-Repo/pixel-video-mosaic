@@ -14,6 +14,17 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // HTML escape helper to prevent injection
+  const escapeHtml = (text: string): string => {
+    if (!text) return '';
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  };
+
   try {
     const { email, type, slots, adminNotes, amount } = await req.json();
 
@@ -66,7 +77,7 @@ serve(async (req) => {
           <h1 style="color: #ef4444;">Video submission not approved</h1>
           <p>Unfortunately, your video submission for slots <strong>${slots.join(', ')}</strong> was not approved for the following reason:</p>
           <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin: 15px 0;">
-            <p style="margin: 0; font-style: italic;">${adminNotes || 'Content did not meet our community guidelines.'}</p>
+            <p style="margin: 0; font-style: italic;">${escapeHtml(adminNotes) || 'Content did not meet our community guidelines.'}</p>
           </div>
           <p>Your payment will be refunded within 5-7 business days.</p>
           <p>If you have any questions, please feel free to reach out to our support team.</p>

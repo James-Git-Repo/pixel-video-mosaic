@@ -187,7 +187,8 @@ const UserUploadPopup: React.FC<UserUploadPopupProps> = ({
       });
 
       if (checkoutError || !checkoutData || !checkoutData.url) {
-        throw new Error('Failed to create checkout');
+        console.error('Checkout creation failed:', checkoutError);
+        throw new Error(checkoutError?.message || 'Failed to create checkout');
       }
 
       // Redirect to Stripe checkout

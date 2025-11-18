@@ -159,7 +159,7 @@ const UserUploadPopup: React.FC<UserUploadPopupProps> = ({
             email: email,
             hold_id: data.hold_id,
             promo_code: promoCode.trim(),
-            linked_url: linkedUrl || null
+            linked_url: linkedUrl
           }
         });
 
@@ -182,7 +182,7 @@ const UserUploadPopup: React.FC<UserUploadPopupProps> = ({
         body: {
           hold_id: data.hold_id,
           email: email,
-          linked_url: linkedUrl || null
+          linked_url: linkedUrl
         }
       });
 

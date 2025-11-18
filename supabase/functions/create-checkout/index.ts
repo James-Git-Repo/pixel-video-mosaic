@@ -93,6 +93,15 @@ serve(async (req) => {
       });
     }
 
+    // Validate that it's a secret key, not a publishable key
+    if (!stripeKey.startsWith('sk_')) {
+      console.error('Invalid Stripe secret key configured. Expected key starting with "sk_", got key starting with:', stripeKey.substring(0, 3));
+      return new Response(
+        JSON.stringify({ error: "Stripe secret key is not valid on the server" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+      );
+    }
+
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
     const siteUrl = Deno.env.get("SITE_URL") || req.headers.get("origin") || "https://lovable.dev";
 
@@ -147,10 +156,20 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('Checkout creation failed');
-    return new Response(JSON.stringify({ error: "Failed to create checkout session" }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
-    });
+    console.error('Checkout creation failed:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorDetails = error instanceof Error && 'type' in error ? JSON.stringify(error) : errorMessage;
+    console.error('Error details:', errorDetails);
+    
+    return new Response(
+      JSON.stringify({ 
+        error: "Failed to create checkout session", 
+        details: errorMessage,
+        hint: "Check the edge function logs for more information"
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500,
+      }
+    );
   }
 });

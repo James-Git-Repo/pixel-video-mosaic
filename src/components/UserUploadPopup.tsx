@@ -75,7 +75,9 @@ const UserUploadPopup: React.FC<UserUploadPopupProps> = ({
   const calculateTotal = () => {
     // Server will validate promo code and determine final price
     // Client should not know if code is valid
-    return selectedSlots.length * 0.50; // $0.50 USD per slot
+    const baseTotal = selectedSlots.length * 0.50; // $0.50 USD per slot
+    const minimumTotal = 1.0; // Minimum $1.00 charge to satisfy Stripe limits
+    return baseTotal < minimumTotal ? minimumTotal : baseTotal;
   };
 
   const handleFileSelect = () => {

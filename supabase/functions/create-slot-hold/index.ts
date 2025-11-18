@@ -92,6 +92,17 @@ serve(async (req) => {
       }
     }
 
+    // Before creating a new hold, remove any existing holds for this email
+    // This avoids "slot_taken" conflicts if a previous attempt failed during checkout
+    const { error: cleanupError } = await supabaseClient
+      .from('slot_holds')
+      .delete()
+      .eq('email', email);
+
+    if (cleanupError) {
+      console.error('Failed to cleanup existing holds for email:', email, cleanupError);
+    }
+
     // Use the atomic function for slot reservation with email included
     const { data: result, error: atomicError } = await supabaseClient.rpc('create_slot_hold_atomic', {
       p_user_id: anonymousUserId,

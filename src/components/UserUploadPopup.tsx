@@ -149,6 +149,17 @@ const UserUploadPopup: React.FC<UserUploadPopupProps> = ({
 
       if (error || !data || !data.hold_id) {
         console.error('Hold creation failed:', error);
+        
+        // Check if it's a 409 conflict (slots already taken)
+        if (error?.message?.includes('409') || error?.message?.includes('SLOT_TAKEN')) {
+          toast({
+            title: "Slots no longer available",
+            description: "Some slots you selected are already taken. Please refresh and select different slots.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
         throw new Error(error?.message || 'Failed to reserve slots');
       }
 

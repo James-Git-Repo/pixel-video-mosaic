@@ -42,6 +42,9 @@ verify_jwt = false
 [functions.clean-expired-slots]
 verify_jwt = false
 
+[functions.clean-all-holds]
+verify_jwt = false
+
 # Cron job to release expired holds every minute
 [[cron]]
 name = "release-expired-holds"

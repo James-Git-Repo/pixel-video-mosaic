@@ -105,6 +105,12 @@ serve(async (req) => {
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
     const siteUrl = Deno.env.get("SITE_URL") || req.headers.get("origin") || "https://lovable.dev";
 
+    // Pricing: $0.50 per slot, minimum $1.00 total (Stripe requires at least ~€0.50)
+    const pricePerSlotCents = 50;
+    const minTotalCents = 100; // $1.00
+    const calculatedTotalCents = slotCount * pricePerSlotCents;
+    const totalAmountCents = Math.max(calculatedTotalCents, minTotalCents);
+
     // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
       customer_email: email,
@@ -116,9 +122,9 @@ serve(async (req) => {
               name: `Video Slot Purchase (${slotCount} slot${slotCount > 1 ? 's' : ''})`,
               description: `Slots: ${hold.top_left} to ${hold.bottom_right}`,
             },
-            unit_amount: 50, // $0.50 in cents
+            unit_amount: totalAmountCents,
           },
-          quantity: slotCount,
+          quantity: 1,
         },
       ],
       mode: "payment",

@@ -123,14 +123,9 @@ const VideoGridInterface: React.FC = () => {
 
           {/* Title */}
           <div className="text-center flex-1 mx-8">
-            <h1 className="text-4xl font-cyber font-black neon-text mb-1">
+            <h1 className="text-4xl font-cyber font-black neon-text">
               The Million Slots AI Billboard
             </h1>
-            <p className="text-sm text-muted-foreground mt-1 font-futura flex items-center justify-center gap-2">
-              <span className="inline-block w-2 h-2 bg-accent rounded-full animate-pulse"></span>
-              1,000,000 video slots • Interactive digital canvas
-              <span className="inline-block w-2 h-2 bg-primary rounded-full animate-pulse"></span>
-            </p>
           </div>
 
           {/* Floating Buy Button with Selection Summary */}
@@ -192,26 +187,6 @@ const VideoGridInterface: React.FC = () => {
         </div>
       </header>
 
-      {/* Instructions */}
-      <div className="relative z-10 border-b border-primary/30 px-6 py-3" style={{ 
-        background: 'linear-gradient(90deg, hsl(var(--neon-purple) / 0.1) 0%, hsl(var(--neon-pink) / 0.15) 50%, hsl(var(--neon-cyan) / 0.1) 100%)'
-      }}>
-        <div className="text-center space-y-2">
-          <p className="text-sm text-foreground/90 font-futura">
-            Drag to select rectangular areas. Click occupied slots to watch videos. Each slot costs $1.00 USD.
-          </p>
-          <div className="flex items-center justify-center gap-3">
-            <div className="h-[2px] w-8 bg-gradient-to-r from-transparent via-primary to-transparent"></div>
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full neon-border bg-primary/5">
-              <Sparkles className="w-4 h-4 text-primary animate-pulse" />
-              <span className="text-sm font-cyber font-bold sparkle-text">All content must be AI-generated!</span>
-              <Sparkles className="w-4 h-4 text-accent animate-pulse" style={{ animationDelay: '0.5s' }} />
-            </div>
-            <div className="h-[2px] w-8 bg-gradient-to-r from-transparent via-accent to-transparent"></div>
-          </div>
-        </div>
-      </div>
-
 
       {/* Main Grid */}
       <main className="flex-1 relative overflow-hidden floor-glow">
@@ -246,6 +221,26 @@ const VideoGridInterface: React.FC = () => {
           />
         </div>
       </main>
+
+      {/* Footer with Instructions */}
+      <footer className="relative z-10 border-t border-primary/30 px-4 py-2" style={{ 
+        background: 'linear-gradient(90deg, hsl(var(--neon-purple) / 0.1) 0%, hsl(var(--neon-pink) / 0.15) 50%, hsl(var(--neon-cyan) / 0.1) 100%)'
+      }}>
+        <div className="text-center space-y-1.5">
+          <p className="text-xs text-foreground/80 font-futura">
+            Drag to select rectangular areas. Click occupied slots to watch videos. Each slot costs $1.00 USD.
+          </p>
+          <div className="flex items-center justify-center gap-2">
+            <div className="h-[1px] w-6 bg-gradient-to-r from-transparent via-primary to-transparent"></div>
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-full neon-border bg-primary/5">
+              <Sparkles className="w-3 h-3 text-primary animate-pulse" />
+              <span className="text-xs font-cyber font-bold sparkle-text">All content must be AI-generated!</span>
+              <Sparkles className="w-3 h-3 text-accent animate-pulse" style={{ animationDelay: '0.5s' }} />
+            </div>
+            <div className="h-[1px] w-6 bg-gradient-to-r from-transparent via-accent to-transparent"></div>
+          </div>
+        </div>
+      </footer>
 
       {/* Navigation Drawer */}
       <NavigationDrawer

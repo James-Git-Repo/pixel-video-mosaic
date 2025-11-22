@@ -55,13 +55,14 @@ const WelcomeVideoModal: React.FC<WelcomeVideoModalProps> = ({
 
         <div className="space-y-6">
           {welcomeVideo ? (
-            <div className="border border-border rounded-lg overflow-hidden">
+            <div className="border border-border rounded-lg overflow-hidden bg-black">
               <video
                 className="w-full aspect-video object-cover"
                 src={welcomeVideo}
-                controls
-                preload="none"
+                autoPlay
+                loop
                 muted
+                playsInline
               />
             </div>
           ) : (

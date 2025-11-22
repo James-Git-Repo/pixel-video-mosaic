@@ -169,7 +169,7 @@ const VideoGridInterface: React.FC = () => {
 
       {/* Selection Summary Panel */}
       {selectionCount > 0 && (
-        <div className="absolute top-40 right-4 z-20 bg-card/95 backdrop-blur-xl neon-border rounded-xl p-4 shadow-2xl w-80 glow-hover animate-scale-in">
+        <div className="fixed top-[140px] right-6 z-30 bg-card/95 backdrop-blur-xl neon-border rounded-xl p-4 shadow-2xl w-80 glow-hover animate-scale-in">
           <div className="space-y-3">
             <div className="flex items-center gap-3">
               <div className="w-3 h-3 bg-primary rounded-full animate-glow-pulse shadow-lg"></div>
@@ -212,15 +212,15 @@ const VideoGridInterface: React.FC = () => {
 
       {/* Main Grid */}
       <main className="flex-1 relative overflow-hidden floor-glow">
-        <div className={selectionCount > 0 || showUserUpload ? "pointer-events-none opacity-60" : ""}>
+        <div className={showUserUpload ? "pointer-events-none opacity-60" : ""}>
           <CanvasVideoGrid
             videos={videos}
             occupiedSlots={occupiedSlots}
             onVideoView={handleVideoView}
             selectedSlots={selectedSlots}
             onSelectionChange={(newSelection) => {
-              // Block grid updates while a selection summary or purchase popup is open
-              if (selectionCount > 0 || showUserUpload) return;
+              // Block grid updates only while the purchase popup is open
+              if (showUserUpload) return;
 
               // Update the selection in the hook
               for (const slotId of newSelection) {
@@ -236,7 +236,8 @@ const VideoGridInterface: React.FC = () => {
               }
             }}
             onSlotClick={(slotId) => {
-              if (selectionCount > 0 || showUserUpload) return;
+              // Prevent clicks only when the purchase popup is open
+              if (showUserUpload) return;
               handleSlotClick(slotId);
             }}
           />

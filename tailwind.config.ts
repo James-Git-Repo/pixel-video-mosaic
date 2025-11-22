@@ -69,6 +69,7 @@ export default {
 				neon: {
 					purple: 'hsl(var(--neon-purple))',
 					pink: 'hsl(var(--neon-pink))',
+					magenta: 'hsl(var(--neon-magenta))',
 					blue: 'hsl(var(--neon-blue))',
 					cyan: 'hsl(var(--neon-cyan))',
 					green: 'hsl(var(--neon-green))'
@@ -100,8 +101,17 @@ export default {
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
-				'neon-flow': 'neon-flow 3s ease infinite',
-				'glow-pulse': 'glow-pulse 2s ease-in-out infinite'
+				'neon-flow': 'neon-flow 4s ease infinite',
+				'glow-pulse': 'glow-pulse 2s ease-in-out infinite',
+				'shimmer': 'shimmer 3s ease-in-out infinite',
+				'float': 'float 3s ease-in-out infinite',
+				'scale-in': 'scale-in 0.3s ease-out'
+			},
+			keyframes: {
+				'scale-in': {
+					'0%': { transform: 'scale(0.9)', opacity: '0' },
+					'100%': { transform: 'scale(1)', opacity: '1' }
+				}
 			}
 		}
 	},

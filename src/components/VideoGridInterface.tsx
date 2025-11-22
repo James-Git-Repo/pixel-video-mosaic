@@ -212,13 +212,16 @@ const VideoGridInterface: React.FC = () => {
 
       {/* Main Grid */}
       <main className="flex-1 relative overflow-hidden floor-glow">
-        <div className={showUserUpload ? "pointer-events-none opacity-50" : ""}>
+        <div className={selectionCount > 0 || showUserUpload ? "pointer-events-none opacity-60" : ""}>
           <CanvasVideoGrid
             videos={videos}
             occupiedSlots={occupiedSlots}
             onVideoView={handleVideoView}
             selectedSlots={selectedSlots}
             onSelectionChange={(newSelection) => {
+              // Block grid updates while a selection summary or purchase popup is open
+              if (selectionCount > 0 || showUserUpload) return;
+
               // Update the selection in the hook
               for (const slotId of newSelection) {
                 if (!selectedSlots.has(slotId)) {
@@ -232,7 +235,10 @@ const VideoGridInterface: React.FC = () => {
                 }
               }
             }}
-            onSlotClick={handleSlotClick}
+            onSlotClick={(slotId) => {
+              if (selectionCount > 0 || showUserUpload) return;
+              handleSlotClick(slotId);
+            }}
           />
         </div>
       </main>

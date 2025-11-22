@@ -169,7 +169,7 @@ const VideoGridInterface: React.FC = () => {
 
       {/* Selection Summary Panel */}
       {selectionCount > 0 && (
-        <div className="absolute top-28 right-6 z-20 bg-card/95 backdrop-blur-xl neon-border rounded-xl p-4 shadow-lg w-80 glow-hover animate-scale-in">
+        <div className="absolute top-20 right-4 z-20 bg-card/95 backdrop-blur-xl neon-border rounded-xl p-4 shadow-2xl w-80 glow-hover animate-scale-in">
           <div className="space-y-3">
             <div className="flex items-center gap-3">
               <div className="w-3 h-3 bg-primary rounded-full animate-glow-pulse shadow-lg"></div>
@@ -212,27 +212,29 @@ const VideoGridInterface: React.FC = () => {
 
       {/* Main Grid */}
       <main className="flex-1 relative overflow-hidden floor-glow">
-        <CanvasVideoGrid
-          videos={videos}
-          occupiedSlots={occupiedSlots}
-          onVideoView={handleVideoView}
-          selectedSlots={selectedSlots}
-          onSelectionChange={(newSelection) => {
-            // Update the selection in the hook
-            for (const slotId of newSelection) {
-              if (!selectedSlots.has(slotId)) {
-                toggleSlot(slotId);
+        <div className={showUserUpload ? "pointer-events-none opacity-50" : ""}>
+          <CanvasVideoGrid
+            videos={videos}
+            occupiedSlots={occupiedSlots}
+            onVideoView={handleVideoView}
+            selectedSlots={selectedSlots}
+            onSelectionChange={(newSelection) => {
+              // Update the selection in the hook
+              for (const slotId of newSelection) {
+                if (!selectedSlots.has(slotId)) {
+                  toggleSlot(slotId);
+                }
               }
-            }
-            // Remove slots that are no longer selected
-            for (const slotId of selectedSlots) {
-              if (!newSelection.has(slotId)) {
-                toggleSlot(slotId);
+              // Remove slots that are no longer selected
+              for (const slotId of selectedSlots) {
+                if (!newSelection.has(slotId)) {
+                  toggleSlot(slotId);
+                }
               }
-            }
-          }}
-          onSlotClick={handleSlotClick}
-        />
+            }}
+            onSlotClick={handleSlotClick}
+          />
+        </div>
       </main>
 
       {/* Navigation Drawer */}

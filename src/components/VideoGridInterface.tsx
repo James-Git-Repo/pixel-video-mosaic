@@ -133,17 +133,62 @@ const VideoGridInterface: React.FC = () => {
             </p>
           </div>
 
-          {/* Floating Buy Button */}
-          <Button
-            onClick={handlePurchaseSelected}
-            disabled={selectionCount === 0}
-            className="cyber-bg text-foreground font-cyber font-bold px-8 py-4 text-lg glow-hover disabled:opacity-20 disabled:cursor-not-allowed neon-border-cyan relative overflow-hidden group"
-          >
-            <ShoppingCart className="w-6 h-6 mr-2 relative z-10" />
-            <span className="relative z-10">
-              Buy {selectionCount || ''} Slot{selectionCount !== 1 ? 's' : ''}
-            </span>
-          </Button>
+          {/* Floating Buy Button with Selection Summary */}
+          <div className="relative flex flex-col items-end">
+            <Button
+              onClick={handlePurchaseSelected}
+              disabled={selectionCount === 0}
+              className="cyber-bg text-foreground font-cyber font-bold px-8 py-4 text-lg glow-hover disabled:opacity-20 disabled:cursor-not-allowed neon-border-cyan relative overflow-hidden group"
+            >
+              <ShoppingCart className="w-6 h-6 mr-2 relative z-10" />
+              <span className="relative z-10">
+                Buy {selectionCount || ''} Slot{selectionCount !== 1 ? 's' : ''}
+              </span>
+            </Button>
+
+            {/* Selection Summary Panel - positioned under Buy button */}
+            {selectionCount > 0 && (
+              <div className="absolute right-0 top-full mt-3 z-30 bg-card/95 backdrop-blur-xl neon-border rounded-xl p-4 shadow-2xl w-80 glow-hover animate-scale-in">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-3 h-3 bg-primary rounded-full animate-glow-pulse shadow-lg"></div>
+                    <h3 className="font-cyber font-bold text-base sparkle-text">Selection Summary</h3>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-3 text-sm font-futura">
+                    <div className="bg-primary/5 rounded-lg p-3 neon-border">
+                      <div className="text-muted-foreground text-xs mb-1">Dimensions</div>
+                      <div className="font-bold text-lg text-accent">{getSelectionDimensions().width}×{getSelectionDimensions().height}</div>
+                    </div>
+                    <div className="bg-secondary/5 rounded-lg p-3 neon-border">
+                      <div className="text-muted-foreground text-xs mb-1">Total Slots</div>
+                      <div className="font-bold text-lg text-secondary">{selectionCount}</div>
+                    </div>
+                  </div>
+                  
+                  <div className="pt-3 border-t border-primary/30 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground font-futura">Total Price</span>
+                      <span className="text-xl font-cyber font-black sparkle-text">${(selectionCount * 1.00).toFixed(2)}</span>
+                    </div>
+                    <div className="text-xs text-center text-muted-foreground font-futura bg-accent/5 rounded px-2 py-1.5">
+                      $1.00 per slot • 1-year term
+                    </div>
+                    
+                    <Button
+                      onClick={clearSelection}
+                      variant="ghost"
+                      size="sm"
+                      className="w-full mt-2 text-muted-foreground hover:text-foreground hover:bg-primary/10 font-futura neon-border text-xs"
+                    >
+                      <X className="w-4 h-4 mr-2" />
+                      Clear Selection
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
@@ -167,48 +212,6 @@ const VideoGridInterface: React.FC = () => {
         </div>
       </div>
 
-      {/* Selection Summary Panel */}
-      {selectionCount > 0 && (
-        <div className="fixed top-[140px] right-6 z-30 bg-card/95 backdrop-blur-xl neon-border rounded-xl p-4 shadow-2xl w-80 glow-hover animate-scale-in">
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="w-3 h-3 bg-primary rounded-full animate-glow-pulse shadow-lg"></div>
-              <h3 className="font-cyber font-bold text-base sparkle-text">Selection Summary</h3>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-3 text-sm font-futura">
-              <div className="bg-primary/5 rounded-lg p-3 neon-border">
-                <div className="text-muted-foreground text-xs mb-1">Dimensions</div>
-                <div className="font-bold text-lg text-accent">{getSelectionDimensions().width}×{getSelectionDimensions().height}</div>
-              </div>
-              <div className="bg-secondary/5 rounded-lg p-3 neon-border">
-                <div className="text-muted-foreground text-xs mb-1">Total Slots</div>
-                <div className="font-bold text-lg text-secondary">{selectionCount}</div>
-              </div>
-            </div>
-            
-            <div className="pt-3 border-t border-primary/30 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground font-futura">Total Price</span>
-                <span className="text-xl font-cyber font-black sparkle-text">${(selectionCount * 1.00).toFixed(2)}</span>
-              </div>
-              <div className="text-xs text-center text-muted-foreground font-futura bg-accent/5 rounded px-2 py-1.5">
-                $1.00 per slot • 1-year term
-              </div>
-              
-              <Button
-                onClick={clearSelection}
-                variant="ghost"
-                size="sm"
-                className="w-full mt-2 text-muted-foreground hover:text-foreground hover:bg-primary/10 font-futura neon-border text-xs"
-              >
-                <X className="w-4 h-4 mr-2" />
-                Clear Selection
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Main Grid */}
       <main className="flex-1 relative overflow-hidden floor-glow">

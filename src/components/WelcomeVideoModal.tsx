@@ -60,7 +60,7 @@ const WelcomeVideoModal: React.FC<WelcomeVideoModalProps> = ({
                 className="w-full aspect-video object-cover"
                 src={welcomeVideo}
                 controls
-                autoPlay
+                preload="none"
                 muted
               />
             </div>

@@ -9,61 +9,64 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Neon/Cyberpunk theme colors */
-    --background: 240 12% 8%;
-    --foreground: 280 100% 95%;
+    /* Neon/Cyberpunk theme colors - Enhanced vibrant palette */
+    --background: 250 40% 5%;
+    --foreground: 280 100% 98%;
 
-    --card: 240 15% 10%;
-    --card-foreground: 280 100% 95%;
+    --card: 250 35% 8%;
+    --card-foreground: 280 100% 98%;
 
-    --popover: 240 15% 10%;
-    --popover-foreground: 280 100% 95%;
+    --popover: 250 35% 8%;
+    --popover-foreground: 280 100% 98%;
 
-    --primary: 280 100% 65%;  /* Deep purple */
-    --primary-foreground: 240 12% 8%;
+    --primary: 320 100% 58%;  /* Vibrant magenta/pink */
+    --primary-foreground: 250 40% 5%;
 
-    --secondary: 320 90% 65%;  /* Bright pink */
-    --secondary-foreground: 240 12% 8%;
+    --secondary: 280 100% 62%;  /* Electric purple */
+    --secondary-foreground: 250 40% 5%;
 
-    --muted: 240 15% 18%;
-    --muted-foreground: 280 40% 75%;
+    --muted: 250 30% 12%;
+    --muted-foreground: 280 40% 70%;
 
-    --accent: 200 100% 65%;  /* Electric blue */
-    --accent-foreground: 240 12% 8%;
+    --accent: 180 100% 55%;  /* Bright cyan */
+    --accent-foreground: 250 40% 5%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 280 30% 25%;
-    --input: 240 20% 15%;
-    --ring: 280 100% 65%;
+    --border: 280 50% 20%;
+    --input: 250 35% 10%;
+    --ring: 320 100% 58%;
 
-    --radius: 0.75rem;
+    --radius: 0.5rem;
 
-    --sidebar-background: 240 15% 5%;
-    --sidebar-foreground: 280 100% 95%;
-    --sidebar-primary: 280 100% 65%;
-    --sidebar-primary-foreground: 240 12% 8%;
-    --sidebar-accent: 320 90% 65%;
-    --sidebar-accent-foreground: 240 12% 8%;
-    --sidebar-border: 280 30% 25%;
-    --sidebar-ring: 280 100% 65%;
+    --sidebar-background: 250 40% 4%;
+    --sidebar-foreground: 280 100% 98%;
+    --sidebar-primary: 320 100% 58%;
+    --sidebar-primary-foreground: 250 40% 5%;
+    --sidebar-accent: 180 100% 55%;
+    --sidebar-accent-foreground: 250 40% 5%;
+    --sidebar-border: 280 50% 20%;
+    --sidebar-ring: 320 100% 58%;
 
-    /* Enhanced gradient colors for cyberpunk theme */
-    --neon-purple: 280 100% 65%;
-    --neon-pink: 320 90% 65%;
-    --neon-blue: 200 100% 65%;
-    --neon-cyan: 180 100% 60%;
-    --neon-green: 120 100% 60%;
+    /* Enhanced neon colors for intense cyberpunk theme */
+    --neon-purple: 280 100% 62%;
+    --neon-pink: 320 100% 58%;
+    --neon-magenta: 300 100% 60%;
+    --neon-blue: 200 100% 60%;
+    --neon-cyan: 180 100% 55%;
+    --neon-green: 120 100% 55%;
     
-    /* Gradient definitions */
-    --gradient-neon: linear-gradient(135deg, hsl(var(--neon-purple)), hsl(var(--neon-pink)));
-    --gradient-cyber: linear-gradient(135deg, hsl(var(--neon-blue)), hsl(var(--neon-cyan)));
-    --gradient-header: linear-gradient(135deg, hsl(var(--neon-purple) / 0.2), hsl(var(--neon-pink) / 0.2));
+    /* Gradient definitions with intense glow */
+    --gradient-neon: linear-gradient(135deg, hsl(var(--neon-purple)) 0%, hsl(var(--neon-pink)) 50%, hsl(var(--neon-cyan)) 100%);
+    --gradient-cyber: linear-gradient(135deg, hsl(var(--neon-cyan)) 0%, hsl(var(--neon-blue)) 100%);
+    --gradient-header: linear-gradient(180deg, hsl(var(--neon-purple) / 0.15) 0%, hsl(var(--neon-pink) / 0.1) 50%, transparent 100%);
+    --gradient-floor: radial-gradient(ellipse at center, hsl(var(--neon-pink) / 0.15) 0%, hsl(var(--neon-cyan) / 0.08) 40%, transparent 70%);
     
-    /* Shadow effects */
-    --shadow-neon: 0 0 20px hsl(var(--primary) / 0.5);
-    --shadow-glow: 0 0 30px hsl(var(--secondary) / 0.3);
+    /* Enhanced shadow effects with multiple layers */
+    --shadow-neon: 0 0 30px hsl(var(--primary) / 0.6), 0 0 60px hsl(var(--primary) / 0.3);
+    --shadow-glow: 0 0 40px hsl(var(--secondary) / 0.5), 0 0 80px hsl(var(--secondary) / 0.2);
+    --shadow-cyan: 0 0 30px hsl(var(--accent) / 0.6), 0 0 60px hsl(var(--accent) / 0.3);
   }
 
   .dark {
@@ -124,32 +127,85 @@ All colors MUST be HSL.
   .cyber-bg {
     background: var(--gradient-cyber);
     box-shadow: var(--shadow-glow);
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .cyber-bg::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(45deg, transparent 30%, hsl(var(--neon-cyan) / 0.1) 50%, transparent 70%);
+    animation: shimmer 3s ease-in-out infinite;
   }
   
   .header-gradient {
     background: var(--gradient-header);
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid hsl(var(--primary) / 0.3);
+    backdrop-filter: blur(20px) saturate(180%);
+    border-bottom: 2px solid hsl(var(--primary) / 0.4);
+    position: relative;
+  }
+  
+  .header-gradient::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--gradient-neon);
+    filter: blur(4px);
+    opacity: 0.6;
   }
   
   .neon-text {
     background: var(--gradient-neon);
     background-size: 300% 300%;
-    animation: neon-flow 3s ease infinite;
+    animation: neon-flow 4s ease infinite;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    text-shadow: 0 0 20px hsl(var(--primary) / 0.5);
+    filter: drop-shadow(0 0 20px hsl(var(--primary) / 0.6)) drop-shadow(0 0 40px hsl(var(--secondary) / 0.4));
+    font-weight: 900;
+    letter-spacing: 0.05em;
   }
   
   .glow-hover {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
   }
   
   .glow-hover:hover {
-    box-shadow: 0 0 25px hsl(var(--primary) / 0.4), 
-                0 0 50px hsl(var(--secondary) / 0.2);
-    transform: translateY(-2px);
+    box-shadow: 0 0 30px hsl(var(--primary) / 0.6), 
+                0 0 60px hsl(var(--secondary) / 0.4),
+                inset 0 0 20px hsl(var(--primary) / 0.1);
+    transform: translateY(-3px) scale(1.02);
+  }
+  
+  .floor-glow {
+    position: relative;
+  }
+  
+  .floor-glow::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 200px;
+    background: var(--gradient-floor);
+    pointer-events: none;
+  }
+  
+  .neon-border {
+    border: 2px solid hsl(var(--primary) / 0.4);
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.3),
+                inset 0 0 20px hsl(var(--primary) / 0.1);
+  }
+  
+  .neon-border-cyan {
+    border: 2px solid hsl(var(--accent) / 0.5);
+    box-shadow: var(--shadow-cyan);
   }
   
   .sidebar-slide {
@@ -159,6 +215,15 @@ All colors MUST be HSL.
   
   .sidebar-slide.open {
     transform: translateX(0);
+  }
+  
+  .sparkle-text {
+    position: relative;
+    background: linear-gradient(135deg, hsl(var(--neon-pink)), hsl(var(--neon-cyan)));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 15px hsl(var(--primary) / 0.5));
   }
 }
 
@@ -173,10 +238,30 @@ All colors MUST be HSL.
 
 @keyframes glow-pulse {
   0%, 100% {
-    box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
+    box-shadow: 0 0 30px hsl(var(--primary) / 0.4),
+                0 0 60px hsl(var(--primary) / 0.2);
   }
   50% {
-    box-shadow: 0 0 40px hsl(var(--primary) / 0.6),
-                0 0 60px hsl(var(--secondary) / 0.3);
+    box-shadow: 0 0 50px hsl(var(--primary) / 0.7),
+                0 0 100px hsl(var(--secondary) / 0.5),
+                0 0 150px hsl(var(--accent) / 0.3);
+  }
+}
+
+@keyframes shimmer {
+  0%, 100% {
+    transform: translateX(-100%) rotate(45deg);
+  }
+  50% {
+    transform: translateX(100%) rotate(45deg);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
   }
 }

@@ -100,27 +100,36 @@ const VideoGridInterface: React.FC = () => {
   };
 
   return (
-    <div className="w-full h-screen bg-background text-foreground flex flex-col font-futura">
+    <div className="w-full h-screen bg-background text-foreground flex flex-col font-futura relative overflow-hidden">
+      {/* Atmospheric background effects */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-[120px] animate-pulse"></div>
+        <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-accent/15 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '1s' }}></div>
+        <div className="absolute bottom-0 left-1/2 w-[600px] h-[600px] bg-secondary/10 rounded-full blur-[150px]"></div>
+      </div>
+
       {/* Header */}
-      <header className="header-gradient px-6 py-6 relative">
+      <header className="header-gradient px-6 py-8 relative z-10">
         <div className="flex items-center justify-between">
           {/* Hamburger Menu */}
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setIsNavOpen(true)}
-            className="text-foreground hover:bg-primary/20 glow-hover"
+            className="text-foreground hover:bg-primary/30 glow-hover neon-border"
           >
             <Menu className="w-6 h-6" />
           </Button>
 
           {/* Title */}
           <div className="text-center flex-1 mx-8">
-            <h1 className="text-4xl font-cyber font-black neon-text">
+            <h1 className="text-5xl font-cyber font-black neon-text mb-2">
               The Million Slots AI Billboard
             </h1>
-            <p className="text-sm text-muted-foreground mt-2 font-futura">
-              1,000,000 video slots • Interactive digital canvas • AI-generated content only
+            <p className="text-base text-muted-foreground mt-2 font-futura flex items-center justify-center gap-2">
+              <span className="inline-block w-2 h-2 bg-accent rounded-full animate-pulse"></span>
+              1,000,000 video slots • Interactive digital canvas
+              <span className="inline-block w-2 h-2 bg-primary rounded-full animate-pulse"></span>
             </p>
           </div>
 
@@ -128,10 +137,9 @@ const VideoGridInterface: React.FC = () => {
           <Button
             onClick={handlePurchaseSelected}
             disabled={selectionCount === 0}
-            className="cyber-bg text-background font-cyber font-bold px-6 py-3 glow-hover disabled:opacity-30 disabled:cursor-not-allowed shadow-xl border border-neon-cyan/30 relative overflow-hidden group"
+            className="cyber-bg text-foreground font-cyber font-bold px-8 py-4 text-lg glow-hover disabled:opacity-20 disabled:cursor-not-allowed neon-border-cyan relative overflow-hidden group"
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-neon-pink to-neon-blue opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
-            <ShoppingCart className="w-5 h-5 mr-2" />
+            <ShoppingCart className="w-6 h-6 mr-2 relative z-10" />
             <span className="relative z-10">
               Buy {selectionCount || ''} Slot{selectionCount !== 1 ? 's' : ''}
             </span>
@@ -140,53 +148,59 @@ const VideoGridInterface: React.FC = () => {
       </header>
 
       {/* Instructions */}
-      <div className="bg-gradient-to-r from-primary/10 via-secondary/10 to-accent/10 border-b border-primary/20 px-6 py-4">
-        <div className="text-center space-y-2">
-            <p className="text-sm text-foreground font-futura">
+      <div className="relative z-10 border-b border-primary/30 px-6 py-5" style={{ 
+        background: 'linear-gradient(90deg, hsl(var(--neon-purple) / 0.1) 0%, hsl(var(--neon-pink) / 0.15) 50%, hsl(var(--neon-cyan) / 0.1) 100%)'
+      }}>
+        <div className="text-center space-y-3">
+          <p className="text-base text-foreground/90 font-futura">
             Drag to select rectangular areas. Double-click videos to view or empty slots for info. Each slot costs $1.00 USD.
           </p>
-          <div className="flex items-center justify-center gap-2 text-primary font-semibold animate-glow-pulse">
-            <Sparkles className="w-4 h-4" />
-            <span className="text-sm font-cyber">All content must be AI-generated!</span>
-            <Sparkles className="w-4 h-4" />
+          <div className="flex items-center justify-center gap-3">
+            <div className="h-[2px] w-12 bg-gradient-to-r from-transparent via-primary to-transparent"></div>
+            <div className="flex items-center gap-2 px-4 py-2 rounded-full neon-border bg-primary/5">
+              <Sparkles className="w-5 h-5 text-primary animate-pulse" />
+              <span className="text-base font-cyber font-bold sparkle-text">All content must be AI-generated!</span>
+              <Sparkles className="w-5 h-5 text-accent animate-pulse" style={{ animationDelay: '0.5s' }} />
+            </div>
+            <div className="h-[2px] w-12 bg-gradient-to-r from-transparent via-accent to-transparent"></div>
           </div>
         </div>
       </div>
 
       {/* Selection Summary Panel */}
       {selectionCount > 0 && (
-        <div className="absolute top-32 right-4 z-20 bg-card/90 backdrop-blur-sm border border-primary/30 rounded-lg p-4 shadow-lg min-w-[280px] glow-hover">
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-primary rounded-full animate-glow-pulse"></div>
-              <h3 className="font-cyber font-semibold text-foreground">Selection Summary</h3>
+        <div className="absolute top-36 right-6 z-20 bg-card/95 backdrop-blur-xl neon-border rounded-xl p-5 shadow-lg min-w-[300px] glow-hover animate-scale-in">
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-3 h-3 bg-primary rounded-full animate-glow-pulse shadow-lg"></div>
+              <h3 className="font-cyber font-bold text-lg sparkle-text">Selection Summary</h3>
             </div>
             
             <div className="grid grid-cols-2 gap-4 text-sm font-futura">
-              <div>
-                <div className="text-muted-foreground">Dimensions</div>
-                <div className="font-medium text-accent">{getSelectionDimensions().width}×{getSelectionDimensions().height}</div>
+              <div className="bg-primary/5 rounded-lg p-3 neon-border">
+                <div className="text-muted-foreground text-xs mb-1">Dimensions</div>
+                <div className="font-bold text-xl text-accent">{getSelectionDimensions().width}×{getSelectionDimensions().height}</div>
               </div>
-              <div>
-                <div className="text-muted-foreground">Total Slots</div>
-                <div className="font-medium text-secondary">{selectionCount}</div>
+              <div className="bg-secondary/5 rounded-lg p-3 neon-border">
+                <div className="text-muted-foreground text-xs mb-1">Total Slots</div>
+                <div className="font-bold text-xl text-secondary">{selectionCount}</div>
               </div>
             </div>
             
-            <div className="pt-2 border-t border-primary/20">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground font-futura">Starting Price</span>
-                <span className="text-lg font-cyber font-bold text-primary">${(selectionCount * 1.00).toFixed(2)} USD</span>
+            <div className="pt-3 border-t border-primary/30">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-muted-foreground font-futura">Total Price</span>
+                <span className="text-2xl font-cyber font-black sparkle-text">${(selectionCount * 1.00).toFixed(2)}</span>
               </div>
-              <div className="text-xs text-muted-foreground mt-1 font-futura">
-                $1.00 per slot (1-year term)
+              <div className="text-xs text-center text-muted-foreground font-futura bg-accent/5 rounded px-2 py-1">
+                $1.00 per slot • 1-year term
               </div>
               
               <Button
                 onClick={clearSelection}
                 variant="ghost"
                 size="sm"
-                className="w-full mt-3 text-muted-foreground hover:text-foreground font-futura"
+                className="w-full mt-3 text-muted-foreground hover:text-foreground hover:bg-primary/10 font-futura neon-border"
               >
                 <X className="w-4 h-4 mr-2" />
                 Clear Selection
@@ -197,7 +211,7 @@ const VideoGridInterface: React.FC = () => {
       )}
 
       {/* Main Grid */}
-      <main className="flex-1 relative overflow-hidden">
+      <main className="flex-1 relative overflow-hidden floor-glow">
         <CanvasVideoGrid
           videos={videos}
           occupiedSlots={occupiedSlots}

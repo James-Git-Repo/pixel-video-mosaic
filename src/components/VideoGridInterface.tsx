@@ -142,8 +142,8 @@ const VideoGridInterface: React.FC = () => {
       {/* Instructions */}
       <div className="bg-gradient-to-r from-primary/10 via-secondary/10 to-accent/10 border-b border-primary/20 px-6 py-4">
         <div className="text-center space-y-2">
-          <p className="text-sm text-foreground font-futura">
-            Drag to select rectangular areas. Double-click videos to view or empty slots for info. Each slot costs $0.50 USD.
+            <p className="text-sm text-foreground font-futura">
+            Drag to select rectangular areas. Double-click videos to view or empty slots for info. Each slot costs $1.00 USD.
           </p>
           <div className="flex items-center justify-center gap-2 text-primary font-semibold animate-glow-pulse">
             <Sparkles className="w-4 h-4" />
@@ -176,10 +176,10 @@ const VideoGridInterface: React.FC = () => {
             <div className="pt-2 border-t border-primary/20">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground font-futura">Starting Price</span>
-                <span className="text-lg font-cyber font-bold text-primary">${(selectionCount * 0.50).toFixed(2)} USD</span>
+                <span className="text-lg font-cyber font-bold text-primary">${(selectionCount * 1.00).toFixed(2)} USD</span>
               </div>
               <div className="text-xs text-muted-foreground mt-1 font-futura">
-                From $0.50 per slot (1-year term)
+                $1.00 per slot (1-year term)
               </div>
               
               <Button

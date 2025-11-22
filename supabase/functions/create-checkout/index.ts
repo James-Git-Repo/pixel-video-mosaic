@@ -105,11 +105,9 @@ serve(async (req) => {
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
     const siteUrl = Deno.env.get("SITE_URL") || req.headers.get("origin") || "https://lovable.dev";
 
-    // Pricing: $0.50 per slot, minimum $1.00 total (Stripe requires at least ~€0.50)
-    const pricePerSlotCents = 50;
-    const minTotalCents = 100; // $1.00
-    const calculatedTotalCents = slotCount * pricePerSlotCents;
-    const totalAmountCents = Math.max(calculatedTotalCents, minTotalCents);
+    // Pricing: $1.00 per slot
+    const pricePerSlotCents = 100; // $1.00 per slot
+    const totalAmountCents = slotCount * pricePerSlotCents;
 
     // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({

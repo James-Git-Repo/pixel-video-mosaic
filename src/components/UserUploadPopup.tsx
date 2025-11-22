@@ -220,21 +220,21 @@ const UserUploadPopup: React.FC<UserUploadPopupProps> = ({
 
   return (
     <div className="fixed inset-0 bg-background/95 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-card border border-border rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold sparkle-text">Purchase Video Slots</h2>
+      <div className="bg-card border neon-border rounded-xl p-5 w-full max-w-lg max-h-[85vh] overflow-y-auto shadow-2xl">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold sparkle-text">Purchase Video Slots</h2>
           <button
             onClick={onClose}
             className="p-2 hover:bg-muted rounded-lg transition-colors"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-4">
           {/* Email Input */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Email Address</label>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium">Email Address</label>
             <input
               type="email"
               value={email}
@@ -245,8 +245,8 @@ const UserUploadPopup: React.FC<UserUploadPopupProps> = ({
           </div>
 
           {/* Promo Code Input */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Have a promo code?</label>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium">Have a promo code?</label>
             <input
               type="text"
               value={promoCode}
@@ -257,8 +257,8 @@ const UserUploadPopup: React.FC<UserUploadPopupProps> = ({
           </div>
 
           {/* URL Input */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Link to URL (Optional)</label>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium">Link to URL (Optional)</label>
             <input
               type="url"
               value={linkedUrl}
@@ -270,10 +270,10 @@ const UserUploadPopup: React.FC<UserUploadPopupProps> = ({
           </div>
 
           {/* Slot Selection */}
-          <div className="space-y-4">
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium">Select Video Slots ($0.50 USD each)</label>
-              <div className="text-sm text-muted-foreground">
+              <label className="text-xs font-medium">Select Video Slots ($1.00 USD each)</label>
+              <div className="text-xs text-muted-foreground font-bold">
                 Total: ${calculateTotal().toFixed(2)} USD
               </div>
             </div>
@@ -320,21 +320,21 @@ const UserUploadPopup: React.FC<UserUploadPopupProps> = ({
           </div>
 
           {/* Video Upload */}
-          <div className="space-y-4">
-            <label className="text-sm font-medium">Upload Video (.mp4, .mov, .webm • Max 250MB)</label>
+          <div className="space-y-3">
+            <label className="text-xs font-medium">Upload Video (.mp4, .mov, .webm • Max 250MB)</label>
             <div 
               onClick={handleFileSelect}
-              className="border-2 border-dashed border-primary rounded-lg p-8 text-center cursor-pointer transition-colors hover:border-primary/80 hover:bg-primary/5"
+              className="border-2 border-dashed border-primary rounded-lg p-6 text-center cursor-pointer transition-colors hover:border-primary/80 hover:bg-primary/5"
             >
-              <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">
+              <Upload className="w-6 h-6 mx-auto mb-2 text-muted-foreground" />
+              <p className="text-xs text-muted-foreground">
                 {uploadedVideo ? uploadedVideo.name : 'Click to upload video'}
               </p>
             </div>
 
             {uploadedVideoUrl && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Preview</label>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium">Preview</label>
                 <div className="border border-border rounded-lg overflow-hidden">
                   <video
                     className="w-full aspect-video object-cover"
@@ -356,16 +356,16 @@ const UserUploadPopup: React.FC<UserUploadPopupProps> = ({
           />
 
           {/* Updated Payment Info */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-blue-500 mt-0.5" />
-              <div className="text-sm">
-                <p className="font-medium text-blue-900 mb-1">Payment & Upload Process</p>
-                <ul className="text-blue-700 space-y-1">
-                  <li>• Secure payment processing via Stripe</li>
-                  <li>• Upload your video after payment confirmation</li>
-                  <li>• Videos go live immediately after upload</li>
-                  <li>• All content must be AI-generated</li>
+          <div className="bg-primary/5 border neon-border rounded-lg p-3">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+              <div className="text-xs">
+                <p className="font-medium text-foreground mb-1">Payment & Upload Process</p>
+                <ul className="text-muted-foreground space-y-0.5">
+                  <li>• Secure payment via Stripe</li>
+                  <li>• Upload video after payment</li>
+                  <li>• Videos go live immediately</li>
+                  <li>• AI-generated content only</li>
                 </ul>
               </div>
             </div>

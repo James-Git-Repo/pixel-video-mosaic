@@ -202,7 +202,23 @@ const CanvasVideoGrid: React.FC<CanvasVideoGridProps> = ({
     setDragEnd(null);
   };
 
-  // Handle double click
+  // Handle click (single click for occupied slots, toggle selection for empty)
+  const handleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const coords = getCoordsFromEvent(e);
+    if (!coords) return;
+
+    const slotId = getSlotFromCoords(coords.col, coords.row);
+    
+    // If occupied, open video viewer immediately
+    if (occupiedSlots.has(slotId) && videos[slotId]) {
+      onVideoView(slotId, videos[slotId]);
+    } else {
+      // For empty slots, toggle selection
+      onSlotClick(slotId);
+    }
+  };
+
+  // Handle double click (legacy support, can be same as click)
   const handleDoubleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const coords = getCoordsFromEvent(e);
     if (!coords) return;
@@ -239,6 +255,7 @@ const CanvasVideoGrid: React.FC<CanvasVideoGridProps> = ({
           setIsDragging(false);
           setHoveredSlot(null);
         }}
+        onClick={handleClick}
         onDoubleClick={handleDoubleClick}
         onWheel={handleWheel}
         onContextMenu={(e) => e.preventDefault()}

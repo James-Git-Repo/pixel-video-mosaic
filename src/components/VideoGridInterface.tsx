@@ -109,7 +109,7 @@ const VideoGridInterface: React.FC = () => {
       </div>
 
       {/* Header */}
-      <header className="header-gradient px-6 py-8 relative z-10">
+      <header className="header-gradient px-6 py-4 relative z-10">
         <div className="flex items-center justify-between">
           {/* Hamburger Menu */}
           <Button
@@ -123,10 +123,10 @@ const VideoGridInterface: React.FC = () => {
 
           {/* Title */}
           <div className="text-center flex-1 mx-8">
-            <h1 className="text-5xl font-cyber font-black neon-text mb-2">
+            <h1 className="text-4xl font-cyber font-black neon-text mb-1">
               The Million Slots AI Billboard
             </h1>
-            <p className="text-base text-muted-foreground mt-2 font-futura flex items-center justify-center gap-2">
+            <p className="text-sm text-muted-foreground mt-1 font-futura flex items-center justify-center gap-2">
               <span className="inline-block w-2 h-2 bg-accent rounded-full animate-pulse"></span>
               1,000,000 video slots • Interactive digital canvas
               <span className="inline-block w-2 h-2 bg-primary rounded-full animate-pulse"></span>
@@ -148,28 +148,28 @@ const VideoGridInterface: React.FC = () => {
       </header>
 
       {/* Instructions */}
-      <div className="relative z-10 border-b border-primary/30 px-6 py-5" style={{ 
+      <div className="relative z-10 border-b border-primary/30 px-6 py-3" style={{ 
         background: 'linear-gradient(90deg, hsl(var(--neon-purple) / 0.1) 0%, hsl(var(--neon-pink) / 0.15) 50%, hsl(var(--neon-cyan) / 0.1) 100%)'
       }}>
-        <div className="text-center space-y-3">
-          <p className="text-base text-foreground/90 font-futura">
-            Drag to select rectangular areas. Double-click videos to view or empty slots for info. Each slot costs $1.00 USD.
+        <div className="text-center space-y-2">
+          <p className="text-sm text-foreground/90 font-futura">
+            Drag to select rectangular areas. Click occupied slots to watch videos. Each slot costs $1.00 USD.
           </p>
           <div className="flex items-center justify-center gap-3">
-            <div className="h-[2px] w-12 bg-gradient-to-r from-transparent via-primary to-transparent"></div>
-            <div className="flex items-center gap-2 px-4 py-2 rounded-full neon-border bg-primary/5">
-              <Sparkles className="w-5 h-5 text-primary animate-pulse" />
-              <span className="text-base font-cyber font-bold sparkle-text">All content must be AI-generated!</span>
-              <Sparkles className="w-5 h-5 text-accent animate-pulse" style={{ animationDelay: '0.5s' }} />
+            <div className="h-[2px] w-8 bg-gradient-to-r from-transparent via-primary to-transparent"></div>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full neon-border bg-primary/5">
+              <Sparkles className="w-4 h-4 text-primary animate-pulse" />
+              <span className="text-sm font-cyber font-bold sparkle-text">All content must be AI-generated!</span>
+              <Sparkles className="w-4 h-4 text-accent animate-pulse" style={{ animationDelay: '0.5s' }} />
             </div>
-            <div className="h-[2px] w-12 bg-gradient-to-r from-transparent via-accent to-transparent"></div>
+            <div className="h-[2px] w-8 bg-gradient-to-r from-transparent via-accent to-transparent"></div>
           </div>
         </div>
       </div>
 
       {/* Selection Summary Panel */}
       {selectionCount > 0 && (
-        <div className="absolute top-36 right-6 z-20 bg-card/95 backdrop-blur-xl neon-border rounded-xl p-5 shadow-lg min-w-[300px] glow-hover animate-scale-in">
+        <div className="absolute top-28 right-6 z-20 bg-card/95 backdrop-blur-xl neon-border rounded-xl p-5 shadow-lg min-w-[300px] glow-hover animate-scale-in">
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-3 h-3 bg-primary rounded-full animate-glow-pulse shadow-lg"></div>

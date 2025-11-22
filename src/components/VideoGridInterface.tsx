@@ -169,7 +169,7 @@ const VideoGridInterface: React.FC = () => {
 
       {/* Selection Summary Panel */}
       {selectionCount > 0 && (
-        <div className="absolute top-20 right-4 z-20 bg-card/95 backdrop-blur-xl neon-border rounded-xl p-4 shadow-2xl w-80 glow-hover animate-scale-in">
+        <div className="absolute top-40 right-4 z-20 bg-card/95 backdrop-blur-xl neon-border rounded-xl p-4 shadow-2xl w-80 glow-hover animate-scale-in">
           <div className="space-y-3">
             <div className="flex items-center gap-3">
               <div className="w-3 h-3 bg-primary rounded-full animate-glow-pulse shadow-lg"></div>

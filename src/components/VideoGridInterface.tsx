@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import CanvasVideoGrid from './CanvasVideoGrid';
-import SlotSelector from './SlotSelector';
-import VideoViewer from './VideoViewer';
-import WelcomeVideoModal from './WelcomeVideoModal';
-import UserUploadPopup from './UserUploadPopup';
 import NavigationDrawer from './NavigationDrawer';
 import { ShoppingCart, X, Sparkles, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSlotSelection } from '../hooks/useSlotSelection';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+
+// Lazy load modal components for better performance
+const SlotSelector = lazy(() => import('./SlotSelector'));
+const VideoViewer = lazy(() => import('./VideoViewer'));
+const WelcomeVideoModal = lazy(() => import('./WelcomeVideoModal'));
+const UserUploadPopup = lazy(() => import('./UserUploadPopup'));
 
 const VideoGridInterface: React.FC = () => {
   const { selectedSlots, toggleSlot, clearSelection, selectionCount } = useSlotSelection();
@@ -235,42 +237,44 @@ const VideoGridInterface: React.FC = () => {
         selectedSlots={selectedSlots}
       />
 
-      {/* Modals */}
-      {showSlotSelector && (
-        <SlotSelector 
-          videos={videos}
-          onClose={() => setShowSlotSelector(false)}
-        />
-      )}
+      {/* Modals - Lazy loaded with Suspense for better performance */}
+      <Suspense fallback={null}>
+        {showSlotSelector && (
+          <SlotSelector 
+            videos={videos}
+            onClose={() => setShowSlotSelector(false)}
+          />
+        )}
 
-      {showUserUpload && (
-        <UserUploadPopup
-          onClose={() => {
-            setShowUserUpload(false);
-            clearSelection();
-          }}
-          occupiedSlots={occupiedSlots}
-          onSlotsUpdated={loadOccupiedSlots}
-          preSelectedSlots={Array.from(selectedSlots)}
-        />
-      )}
+        {showUserUpload && (
+          <UserUploadPopup
+            onClose={() => {
+              setShowUserUpload(false);
+              clearSelection();
+            }}
+            occupiedSlots={occupiedSlots}
+            onSlotsUpdated={loadOccupiedSlots}
+            preSelectedSlots={Array.from(selectedSlots)}
+          />
+        )}
 
-      {showWelcomeVideo && (
-        <WelcomeVideoModal
-          onClose={() => setShowWelcomeVideo(false)}
-          welcomeVideo={welcomeVideo}
-          isAdmin={false}
-          onVideoUpload={handleWelcomeVideoUpload}
-        />
-      )}
+        {showWelcomeVideo && (
+          <WelcomeVideoModal
+            onClose={() => setShowWelcomeVideo(false)}
+            welcomeVideo={welcomeVideo}
+            isAdmin={false}
+            onVideoUpload={handleWelcomeVideoUpload}
+          />
+        )}
 
-      {showVideoViewer && currentViewedVideo && (
-        <VideoViewer
-          slotId={currentViewedVideo.slotId}
-          video={currentViewedVideo.video}
-          onClose={handleCloseVideoViewer}
-        />
-      )}
+        {showVideoViewer && currentViewedVideo && (
+          <VideoViewer
+            slotId={currentViewedVideo.slotId}
+            video={currentViewedVideo.video}
+            onClose={handleCloseVideoViewer}
+          />
+        )}
+      </Suspense>
     </div>
   );
 };

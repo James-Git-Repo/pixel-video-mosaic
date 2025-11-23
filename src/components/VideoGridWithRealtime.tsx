@@ -1,12 +1,42 @@
 import React, { useState, useEffect } from 'react';
 import VideoGridInterface from './VideoGridInterface';
 import { supabase } from '@/integrations/supabase/client';
+import { Skeleton } from './ui/skeleton';
 
 const VideoGridWithRealtime: React.FC = () => {
   const [occupiedSlots, setOccupiedSlots] = useState<Set<string>>(new Set());
   const [videos, setVideos] = useState<{ [slotId: string]: string }>({});
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Load initial data
+    const loadInitialData = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('occupied_slots')
+          .select('slot_id, video_url');
+        
+        if (error) throw error;
+        
+        const slotsSet = new Set<string>();
+        const videosMap: { [slotId: string]: string } = {};
+        
+        data?.forEach(slot => {
+          slotsSet.add(slot.slot_id);
+          videosMap[slot.slot_id] = slot.video_url;
+        });
+        
+        setOccupiedSlots(slotsSet);
+        setVideos(videosMap);
+      } catch (error) {
+        console.error('Error loading initial data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadInitialData();
+
     // Subscribe to occupied_slots changes
     const occupiedSlotsChannel = supabase
       .channel('occupied_slots_changes')
@@ -50,6 +80,25 @@ const VideoGridWithRealtime: React.FC = () => {
       supabase.removeChannel(occupiedSlotsChannel);
     };
   }, []);
+
+  if (isLoading) {
+    return (
+      <div className="w-full h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-6">
+          <div className="w-20 h-20 border-4 border-primary/30 border-t-primary rounded-full animate-spin mx-auto"></div>
+          <div className="space-y-2">
+            <h2 className="text-2xl font-cyber font-bold neon-text">AI Billboard Project</h2>
+            <p className="text-muted-foreground font-cyber">Loading the grid...</p>
+          </div>
+          <div className="flex gap-2 justify-center">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-4 w-28" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return <VideoGridInterface occupiedSlots={occupiedSlots} videos={videos} />;
 };

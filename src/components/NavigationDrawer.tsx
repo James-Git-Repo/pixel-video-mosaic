@@ -17,7 +17,6 @@ interface NavigationDrawerProps {
   onClose: () => void;
   onBuySlots: () => void;
   onManualEntry: () => void;
-  onSearchSlot: () => void;
   selectedSlots: Set<string>;
 }
 
@@ -26,7 +25,6 @@ const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
   onClose,
   onBuySlots,
   onManualEntry,
-  onSearchSlot,
   selectedSlots
 }) => {
   const navigate = useNavigate();
@@ -38,14 +36,6 @@ const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
       label: 'Manual Entry',
       description: 'Upload to specific slots',
       onClick: onManualEntry,
-      showForAdmin: false
-    },
-    {
-      id: 'search-slot',
-      icon: Eye,
-      label: 'Search Slot',
-      description: 'Find and view specific slots',
-      onClick: onSearchSlot,
       showForAdmin: false
     }
   ];

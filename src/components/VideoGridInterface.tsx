@@ -124,8 +124,11 @@ const VideoGridInterface: React.FC = () => {
           {/* Title */}
           <div className="text-center flex-1 mx-8">
             <h1 className="text-4xl font-cyber font-black neon-text">
-              The Million Slots AI Billboard
+              AI Billboard Project
             </h1>
+            <p className="text-sm font-cyber text-muted-foreground mt-1">
+              Where Art and Advertising come together
+            </p>
           </div>
 
           {/* Floating Buy Button with Selection Summary */}
@@ -227,7 +230,7 @@ const VideoGridInterface: React.FC = () => {
         background: 'linear-gradient(90deg, hsl(var(--neon-purple) / 0.1) 0%, hsl(var(--neon-pink) / 0.15) 50%, hsl(var(--neon-cyan) / 0.1) 100%)'
       }}>
         <div className="text-center space-y-1.5">
-          <p className="text-xs text-foreground/80 font-futura">
+          <p className="text-xs text-foreground/80 font-cyber">
             Drag to select rectangular areas. Click occupied slots to watch videos. Each slot costs $1.00 USD.
           </p>
           <div className="flex items-center justify-center gap-2">

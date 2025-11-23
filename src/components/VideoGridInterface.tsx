@@ -13,23 +13,46 @@ const VideoViewer = lazy(() => import('./VideoViewer'));
 const WelcomeVideoModal = lazy(() => import('./WelcomeVideoModal'));
 const UserUploadPopup = lazy(() => import('./UserUploadPopup'));
 
-const VideoGridInterface: React.FC = () => {
+interface VideoGridInterfaceProps {
+  occupiedSlots?: Set<string>;
+  videos?: { [slotId: string]: string };
+}
+
+const VideoGridInterface: React.FC<VideoGridInterfaceProps> = ({ 
+  occupiedSlots: initialOccupiedSlots, 
+  videos: initialVideos 
+}) => {
   const { selectedSlots, toggleSlot, clearSelection, selectionCount } = useSlotSelection();
   const [showSlotSelector, setShowSlotSelector] = useState(false);
   const [showUserUpload, setShowUserUpload] = useState(false);
   const [showWelcomeVideo, setShowWelcomeVideo] = useState(true);
   const [showVideoViewer, setShowVideoViewer] = useState(false);
   const [currentViewedVideo, setCurrentViewedVideo] = useState<{slotId: string, video: string} | null>(null);
-  const [videos, setVideos] = useState<{ [slotId: string]: string }>({});
-  const [occupiedSlots, setOccupiedSlots] = useState<Set<string>>(new Set());
+  const [videos, setVideos] = useState<{ [slotId: string]: string }>(initialVideos || {});
+  const [occupiedSlots, setOccupiedSlots] = useState<Set<string>>(initialOccupiedSlots || new Set());
   const [welcomeVideo, setWelcomeVideo] = useState<string | null>('/intro-video.mp4');
   const [isNavOpen, setIsNavOpen] = useState(false);
   const { toast } = useToast();
 
-  // Load occupied slots and videos on component mount
+  // Load occupied slots and videos on component mount (only if not provided via props)
   useEffect(() => {
-    loadOccupiedSlots();
+    if (!initialOccupiedSlots && !initialVideos) {
+      loadOccupiedSlots();
+    }
   }, []);
+
+  // Update local state when props change (for realtime updates)
+  useEffect(() => {
+    if (initialOccupiedSlots) {
+      setOccupiedSlots(initialOccupiedSlots);
+    }
+  }, [initialOccupiedSlots]);
+
+  useEffect(() => {
+    if (initialVideos) {
+      setVideos(initialVideos);
+    }
+  }, [initialVideos]);
 
   const loadOccupiedSlots = async () => {
     try {

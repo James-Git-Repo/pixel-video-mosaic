@@ -30,6 +30,7 @@ const CanvasVideoGrid: React.FC<CanvasVideoGridProps> = ({
   const [dragStart, setDragStart] = useState<{ row: number; col: number } | null>(null);
   const [dragEnd, setDragEnd] = useState<{ row: number; col: number } | null>(null);
   const [hoveredSlot, setHoveredSlot] = useState<string | null>(null);
+  const rafRef = useRef<number>();
 
   // Calculate slot dimensions
   const slotWidth = dimensions.width / GRID_SIZE;
@@ -163,19 +164,27 @@ const CanvasVideoGrid: React.FC<CanvasVideoGridProps> = ({
     setDragEnd(coords);
   };
 
-  // Handle mouse move
+  // Handle mouse move with RAF throttling
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const coords = getCoordsFromEvent(e);
-    if (!coords) {
-      setHoveredSlot(null);
-      return;
-    }
+    // Throttle using requestAnimationFrame
+    if (rafRef.current) return;
+    
+    rafRef.current = requestAnimationFrame(() => {
+      const coords = getCoordsFromEvent(e);
+      if (!coords) {
+        setHoveredSlot(null);
+        rafRef.current = undefined;
+        return;
+      }
 
-    setHoveredSlot(getSlotFromCoords(coords.col, coords.row));
+      setHoveredSlot(getSlotFromCoords(coords.col, coords.row));
 
-    if (isDragging) {
-      setDragEnd(coords);
-    }
+      if (isDragging) {
+        setDragEnd(coords);
+      }
+      
+      rafRef.current = undefined;
+    });
   };
 
   // Handle mouse up
@@ -254,6 +263,11 @@ const CanvasVideoGrid: React.FC<CanvasVideoGridProps> = ({
         onMouseLeave={() => {
           setIsDragging(false);
           setHoveredSlot(null);
+          // Cancel any pending RAF
+          if (rafRef.current) {
+            cancelAnimationFrame(rafRef.current);
+            rafRef.current = undefined;
+          }
         }}
         onClick={handleClick}
         onDoubleClick={handleDoubleClick}

@@ -3,27 +3,10 @@ import VideoGridInterface from './VideoGridInterface';
 import { supabase } from '@/integrations/supabase/client';
 
 const VideoGridWithRealtime: React.FC = () => {
-  const [realtimeKey, setRealtimeKey] = useState(0);
+  const [occupiedSlots, setOccupiedSlots] = useState<Set<string>>(new Set());
+  const [videos, setVideos] = useState<{ [slotId: string]: string }>({});
 
   useEffect(() => {
-    // Subscribe to video_submissions changes
-    const submissionsChannel = supabase
-      .channel('video_submissions_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'video_submissions'
-        },
-        (payload) => {
-          console.log('Video submission change:', payload);
-          // Force re-render by updating key
-          setRealtimeKey(prev => prev + 1);
-        }
-      )
-      .subscribe();
-
     // Subscribe to occupied_slots changes
     const occupiedSlotsChannel = supabase
       .channel('occupied_slots_changes')
@@ -36,38 +19,39 @@ const VideoGridWithRealtime: React.FC = () => {
         },
         (payload) => {
           console.log('Occupied slots change:', payload);
-          // Force re-render by updating key
-          setRealtimeKey(prev => prev + 1);
-        }
-      )
-      .subscribe();
-
-    // Subscribe to occupied_slot_items changes
-    const occupiedItemsChannel = supabase
-      .channel('occupied_slot_items_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'occupied_slot_items'
-        },
-        (payload) => {
-          console.log('Occupied slot items change:', payload);
-          // Force re-render by updating key
-          setRealtimeKey(prev => prev + 1);
+          
+          // Update state based on the event type
+          if (payload.eventType === 'INSERT' && payload.new) {
+            const newSlot = payload.new as { slot_id: string; video_url: string };
+            setOccupiedSlots(prev => new Set(prev).add(newSlot.slot_id));
+            setVideos(prev => ({ ...prev, [newSlot.slot_id]: newSlot.video_url }));
+          } else if (payload.eventType === 'DELETE' && payload.old) {
+            const oldSlot = payload.old as { slot_id: string };
+            setOccupiedSlots(prev => {
+              const newSet = new Set(prev);
+              newSet.delete(oldSlot.slot_id);
+              return newSet;
+            });
+            setVideos(prev => {
+              const newVideos = { ...prev };
+              delete newVideos[oldSlot.slot_id];
+              return newVideos;
+            });
+          } else if (payload.eventType === 'UPDATE' && payload.new) {
+            const updatedSlot = payload.new as { slot_id: string; video_url: string };
+            setOccupiedSlots(prev => new Set(prev).add(updatedSlot.slot_id));
+            setVideos(prev => ({ ...prev, [updatedSlot.slot_id]: updatedSlot.video_url }));
+          }
         }
       )
       .subscribe();
 
     return () => {
-      supabase.removeChannel(submissionsChannel);
       supabase.removeChannel(occupiedSlotsChannel);
-      supabase.removeChannel(occupiedItemsChannel);
     };
   }, []);
 
-  return <VideoGridInterface key={realtimeKey} />;
+  return <VideoGridInterface occupiedSlots={occupiedSlots} videos={videos} />;
 };
 
 export default VideoGridWithRealtime;

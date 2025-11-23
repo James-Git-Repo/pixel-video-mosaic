@@ -18,14 +18,18 @@ export const useSlotSelection = () => {
     }
   }, []);
 
-  // Save selection to localStorage whenever it changes
+  // Save selection to localStorage with debounce (prevents UI freezes)
   useEffect(() => {
-    try {
-      const slotsArray = Array.from(selectedSlots);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(slotsArray));
-    } catch (error) {
-      console.error('Error saving selection to localStorage:', error);
-    }
+    const timeout = setTimeout(() => {
+      try {
+        const slotsArray = Array.from(selectedSlots);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(slotsArray));
+      } catch (error) {
+        console.error('Error saving selection to localStorage:', error);
+      }
+    }, 500); // Save after 500ms of inactivity
+
+    return () => clearTimeout(timeout);
   }, [selectedSlots]);
 
   const toggleSlot = useCallback((slotId: string) => {

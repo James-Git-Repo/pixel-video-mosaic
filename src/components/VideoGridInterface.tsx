@@ -1,4 +1,4 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import React, { useState, useEffect, lazy, Suspense, useMemo, useCallback } from 'react';
 import CanvasVideoGrid from './CanvasVideoGrid';
 import NavigationDrawer from './NavigationDrawer';
 import { ShoppingCart, X, Sparkles, Menu } from 'lucide-react';
@@ -77,22 +77,31 @@ const VideoGridInterface: React.FC<VideoGridInterfaceProps> = ({
     }
   };
 
-  const handleWelcomeVideoUpload = (file: File) => {
+  const handleWelcomeVideoUpload = useCallback((file: File) => {
     const videoUrl = URL.createObjectURL(file);
     setWelcomeVideo(videoUrl);
-  };
+  }, []);
+  
+  // Cleanup uploaded video URL to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (welcomeVideo && welcomeVideo !== '/intro-video.mp4') {
+        URL.revokeObjectURL(welcomeVideo);
+      }
+    };
+  }, [welcomeVideo]);
 
-  const handleVideoView = (slotId: string, video: string) => {
+  const handleVideoView = useCallback((slotId: string, video: string) => {
     setCurrentViewedVideo({ slotId, video });
     setShowVideoViewer(true);
-  };
+  }, []);
 
-  const handleSlotClick = (slotId: string) => {
+  const handleSlotClick = useCallback((slotId: string) => {
     toggleSlot(slotId);
-  };
+  }, [toggleSlot]);
 
-  // Calculate selection dimensions
-  const getSelectionDimensions = () => {
+  // Memoize expensive dimension calculation
+  const selectionDimensions = useMemo(() => {
     if (selectedSlots.size === 0) return { width: 0, height: 0 };
     
     const slots = Array.from(selectedSlots);
@@ -110,17 +119,17 @@ const VideoGridInterface: React.FC<VideoGridInterfaceProps> = ({
       width: maxCol - minCol + 1,
       height: maxRow - minRow + 1
     };
-  };
+  }, [selectedSlots]);
 
-  const handlePurchaseSelected = () => {
+  const handlePurchaseSelected = useCallback(() => {
     if (selectedSlots.size === 0) return;
     setShowUserUpload(true);
-  };
+  }, [selectedSlots]);
 
-  const handleCloseVideoViewer = () => {
+  const handleCloseVideoViewer = useCallback(() => {
     setShowVideoViewer(false);
     setCurrentViewedVideo(null);
-  };
+  }, []);
 
   return (
     <div className="w-full h-screen bg-background text-foreground flex flex-col font-futura relative overflow-hidden">
@@ -179,7 +188,7 @@ const VideoGridInterface: React.FC<VideoGridInterfaceProps> = ({
                   <div className="grid grid-cols-2 gap-3 text-sm font-futura">
                     <div className="bg-primary/5 rounded-lg p-3 neon-border">
                       <div className="text-muted-foreground text-xs mb-1">Dimensions</div>
-                      <div className="font-bold text-lg text-accent">{getSelectionDimensions().width}×{getSelectionDimensions().height}</div>
+                      <div className="font-bold text-lg text-accent">{selectionDimensions.width}×{selectionDimensions.height}</div>
                     </div>
                     <div className="bg-secondary/5 rounded-lg p-3 neon-border">
                       <div className="text-muted-foreground text-xs mb-1">Total Slots</div>

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { X } from 'lucide-react';
 
 interface VideoViewerProps {
@@ -9,6 +9,19 @@ interface VideoViewerProps {
 }
 
 const VideoViewer: React.FC<VideoViewerProps> = ({ slotId, video, onClose }) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  
+  // Cleanup video element to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (videoRef.current) {
+        videoRef.current.pause();
+        videoRef.current.src = '';
+        videoRef.current.load();
+      }
+    };
+  }, []);
+  
   return (
     <div className="fixed inset-0 bg-background/95 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-card border border-border rounded-lg p-6 w-full max-w-2xl">
@@ -24,6 +37,7 @@ const VideoViewer: React.FC<VideoViewerProps> = ({ slotId, video, onClose }) => 
 
         <div className="border border-border rounded-lg overflow-hidden">
           <video
+            ref={videoRef}
             className="w-full aspect-video object-cover"
             src={video}
             controls

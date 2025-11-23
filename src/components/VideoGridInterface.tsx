@@ -128,19 +128,21 @@ const VideoGridInterface: React.FC<VideoGridInterfaceProps> = ({
 
       {/* Header */}
       <header className="header-gradient px-6 py-4 relative z-10">
-        <div className="flex items-center justify-between">
-          {/* Hamburger Menu */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setIsNavOpen(true)}
-            className="text-foreground hover:bg-primary/30 glow-hover neon-border"
-          >
-            <Menu className="w-6 h-6" />
-          </Button>
+        <div className="flex items-center justify-between gap-4">
+          {/* Left Section - Hamburger Menu */}
+          <div className="flex items-center justify-start flex-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsNavOpen(true)}
+              className="text-foreground hover:bg-primary/30 glow-hover neon-border"
+            >
+              <Menu className="w-6 h-6" />
+            </Button>
+          </div>
 
-          {/* Title */}
-          <div className="text-center flex-1 mx-8">
+          {/* Center Section - Title */}
+          <div className="text-center flex-shrink-0">
             <h1 className="text-4xl font-cyber font-black neon-text">
               AI Billboard Project
             </h1>
@@ -149,17 +151,19 @@ const VideoGridInterface: React.FC<VideoGridInterfaceProps> = ({
             </p>
           </div>
 
-          {/* Floating Buy Button */}
-          <Button
-            onClick={handlePurchaseSelected}
-            disabled={selectionCount === 0}
-            className="cyber-bg text-foreground font-cyber font-bold px-8 py-4 text-lg glow-hover disabled:opacity-20 disabled:cursor-not-allowed neon-border-cyan relative overflow-hidden group"
-          >
-            <ShoppingCart className="w-6 h-6 mr-2 relative z-10" />
-            <span className="relative z-10">
-              Buy {selectionCount || ''} Slot{selectionCount !== 1 ? 's' : ''}
-            </span>
-          </Button>
+          {/* Right Section - Buy Button */}
+          <div className="flex items-center justify-end flex-1">
+            <Button
+              onClick={handlePurchaseSelected}
+              disabled={selectionCount === 0}
+              className="cyber-bg text-foreground font-cyber font-bold px-8 py-4 text-lg glow-hover disabled:opacity-20 disabled:cursor-not-allowed neon-border-cyan relative overflow-hidden group"
+            >
+              <ShoppingCart className="w-6 h-6 mr-2 relative z-10" />
+              <span className="relative z-10">
+                Buy {selectionCount || ''} Slot{selectionCount !== 1 ? 's' : ''}
+              </span>
+            </Button>
+          </div>
         </div>
       </header>
 

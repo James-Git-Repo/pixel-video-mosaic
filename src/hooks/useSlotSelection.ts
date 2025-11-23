@@ -58,6 +58,7 @@ export const useSlotSelection = () => {
 
   return {
     selectedSlots,
+    setSelectedSlots,
     toggleSlot,
     selectSlots,
     clearSelection,

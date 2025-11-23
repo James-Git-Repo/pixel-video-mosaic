@@ -1,14 +1,14 @@
 import React, { useState, useEffect, lazy, Suspense, useMemo, useCallback } from 'react';
-import CanvasVideoGrid from './CanvasVideoGrid';
 import NavigationDrawer from './NavigationDrawer';
-import { ShoppingCart, X, Sparkles, Menu } from 'lucide-react';
+import { ShoppingCart, Sparkles, Menu } from 'lucide-react';
+
+// Lazy load grid and modal components for better performance
+const CanvasVideoGrid = lazy(() => import('./CanvasVideoGrid'));
 import { Button } from '@/components/ui/button';
 import { useSlotSelection } from '../hooks/useSlotSelection';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-// Lazy load modal components for better performance
-const SlotSelector = lazy(() => import('./SlotSelector'));
 const VideoViewer = lazy(() => import('./VideoViewer'));
 const WelcomeVideoModal = lazy(() => import('./WelcomeVideoModal'));
 const UserUploadPopup = lazy(() => import('./UserUploadPopup'));
@@ -22,8 +22,7 @@ const VideoGridInterface: React.FC<VideoGridInterfaceProps> = ({
   occupiedSlots: initialOccupiedSlots, 
   videos: initialVideos 
 }) => {
-  const { selectedSlots, toggleSlot, clearSelection, selectionCount } = useSlotSelection();
-  const [showSlotSelector, setShowSlotSelector] = useState(false);
+  const { selectedSlots, setSelectedSlots, clearSelection, selectionCount } = useSlotSelection();
   const [showUserUpload, setShowUserUpload] = useState(false);
   const [showWelcomeVideo, setShowWelcomeVideo] = useState(true);
   const [showVideoViewer, setShowVideoViewer] = useState(false);
@@ -97,29 +96,16 @@ const VideoGridInterface: React.FC<VideoGridInterfaceProps> = ({
   }, []);
 
   const handleSlotClick = useCallback((slotId: string) => {
-    toggleSlot(slotId);
-  }, [toggleSlot]);
-
-  // Memoize expensive dimension calculation
-  const selectionDimensions = useMemo(() => {
-    if (selectedSlots.size === 0) return { width: 0, height: 0 };
-    
-    const slots = Array.from(selectedSlots);
-    const coords = slots.map(slot => {
-      const [row, col] = slot.split('-').map(Number);
-      return { row, col };
+    setSelectedSlots(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(slotId)) {
+        newSet.delete(slotId);
+      } else {
+        newSet.add(slotId);
+      }
+      return newSet;
     });
-    
-    const minRow = Math.min(...coords.map(c => c.row));
-    const maxRow = Math.max(...coords.map(c => c.row));
-    const minCol = Math.min(...coords.map(c => c.col));
-    const maxCol = Math.max(...coords.map(c => c.col));
-    
-    return {
-      width: maxCol - minCol + 1,
-      height: maxRow - minRow + 1
-    };
-  }, [selectedSlots]);
+  }, [setSelectedSlots]);
 
   const handlePurchaseSelected = useCallback(() => {
     if (selectedSlots.size === 0) return;
@@ -163,62 +149,17 @@ const VideoGridInterface: React.FC<VideoGridInterfaceProps> = ({
             </p>
           </div>
 
-          {/* Floating Buy Button with Selection Summary */}
-          <div className="relative flex flex-col items-end">
-            <Button
-              onClick={handlePurchaseSelected}
-              disabled={selectionCount === 0}
-              className="cyber-bg text-foreground font-cyber font-bold px-8 py-4 text-lg glow-hover disabled:opacity-20 disabled:cursor-not-allowed neon-border-cyan relative overflow-hidden group"
-            >
-              <ShoppingCart className="w-6 h-6 mr-2 relative z-10" />
-              <span className="relative z-10">
-                Buy {selectionCount || ''} Slot{selectionCount !== 1 ? 's' : ''}
-              </span>
-            </Button>
-
-            {/* Selection Summary Panel - positioned under Buy button */}
-            {selectionCount > 0 && (
-              <div className="absolute right-0 top-full mt-3 z-30 bg-card/95 backdrop-blur-xl neon-border rounded-xl p-4 shadow-2xl w-80 glow-hover animate-scale-in">
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-3 h-3 bg-primary rounded-full animate-glow-pulse shadow-lg"></div>
-                    <h3 className="font-cyber font-bold text-base sparkle-text">Selection Summary</h3>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-3 text-sm font-futura">
-                    <div className="bg-primary/5 rounded-lg p-3 neon-border">
-                      <div className="text-muted-foreground text-xs mb-1">Dimensions</div>
-                      <div className="font-bold text-lg text-accent">{selectionDimensions.width}×{selectionDimensions.height}</div>
-                    </div>
-                    <div className="bg-secondary/5 rounded-lg p-3 neon-border">
-                      <div className="text-muted-foreground text-xs mb-1">Total Slots</div>
-                      <div className="font-bold text-lg text-secondary">{selectionCount}</div>
-                    </div>
-                  </div>
-                  
-                  <div className="pt-3 border-t border-primary/30 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground font-futura">Total Price</span>
-                      <span className="text-xl font-cyber font-black sparkle-text">${(selectionCount * 1.00).toFixed(2)}</span>
-                    </div>
-                    <div className="text-xs text-center text-muted-foreground font-futura bg-accent/5 rounded px-2 py-1.5">
-                      $1.00 per slot • 1-year term
-                    </div>
-                    
-                    <Button
-                      onClick={clearSelection}
-                      variant="ghost"
-                      size="sm"
-                      className="w-full mt-2 text-muted-foreground hover:text-foreground hover:bg-primary/10 font-futura neon-border text-xs"
-                    >
-                      <X className="w-4 h-4 mr-2" />
-                      Clear Selection
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
+          {/* Floating Buy Button */}
+          <Button
+            onClick={handlePurchaseSelected}
+            disabled={selectionCount === 0}
+            className="cyber-bg text-foreground font-cyber font-bold px-8 py-4 text-lg glow-hover disabled:opacity-20 disabled:cursor-not-allowed neon-border-cyan relative overflow-hidden group"
+          >
+            <ShoppingCart className="w-6 h-6 mr-2 relative z-10" />
+            <span className="relative z-10">
+              Buy {selectionCount || ''} Slot{selectionCount !== 1 ? 's' : ''}
+            </span>
+          </Button>
         </div>
       </header>
 
@@ -226,34 +167,22 @@ const VideoGridInterface: React.FC<VideoGridInterfaceProps> = ({
       {/* Main Grid */}
       <main className="flex-1 relative overflow-hidden floor-glow">
         <div className={showUserUpload ? "pointer-events-none opacity-60" : ""}>
-          <CanvasVideoGrid
-            videos={videos}
-            occupiedSlots={occupiedSlots}
-            onVideoView={handleVideoView}
-            selectedSlots={selectedSlots}
-            onSelectionChange={(newSelection) => {
-              // Block grid updates only while the purchase popup is open
-              if (showUserUpload) return;
-
-              // Update the selection in the hook
-              for (const slotId of newSelection) {
-                if (!selectedSlots.has(slotId)) {
-                  toggleSlot(slotId);
-                }
-              }
-              // Remove slots that are no longer selected
-              for (const slotId of selectedSlots) {
-                if (!newSelection.has(slotId)) {
-                  toggleSlot(slotId);
-                }
-              }
-            }}
-            onSlotClick={(slotId) => {
-              // Prevent clicks only when the purchase popup is open
-              if (showUserUpload) return;
-              handleSlotClick(slotId);
-            }}
-          />
+          <Suspense fallback={<GridSkeleton />}>
+            <CanvasVideoGrid
+              videos={videos}
+              occupiedSlots={occupiedSlots}
+              onVideoView={handleVideoView}
+              selectedSlots={selectedSlots}
+              onSelectionChange={(newSelection) => {
+                if (showUserUpload) return;
+                setSelectedSlots(newSelection);
+              }}
+              onSlotClick={(slotId) => {
+                if (showUserUpload) return;
+                handleSlotClick(slotId);
+              }}
+            />
+          </Suspense>
         </div>
       </main>
 
@@ -286,22 +215,11 @@ const VideoGridInterface: React.FC<VideoGridInterfaceProps> = ({
           setShowUserUpload(true);
           setIsNavOpen(false);
         }}
-        onSearchSlot={() => {
-          setShowSlotSelector(true);
-          setIsNavOpen(false);
-        }}
         selectedSlots={selectedSlots}
       />
 
       {/* Modals - Lazy loaded with Suspense for better performance */}
       <Suspense fallback={null}>
-        {showSlotSelector && (
-          <SlotSelector 
-            videos={videos}
-            onClose={() => setShowSlotSelector(false)}
-          />
-        )}
-
         {showUserUpload && (
           <UserUploadPopup
             onClose={() => {
@@ -334,5 +252,15 @@ const VideoGridInterface: React.FC<VideoGridInterfaceProps> = ({
     </div>
   );
 };
+
+// Grid skeleton loading component
+const GridSkeleton = () => (
+  <div className="w-full h-full flex items-center justify-center">
+    <div className="text-center space-y-4">
+      <div className="w-16 h-16 border-4 border-primary/30 border-t-primary rounded-full animate-spin mx-auto"></div>
+      <p className="text-muted-foreground font-cyber">Loading grid...</p>
+    </div>
+  </div>
+);
 
 export default VideoGridInterface;

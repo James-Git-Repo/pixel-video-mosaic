@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+import React, { useRef, useEffect, useState, useCallback, memo } from 'react';
 
 const GRID_SIZE = 100;
 
@@ -31,6 +31,16 @@ const CanvasVideoGrid: React.FC<CanvasVideoGridProps> = ({
   const [dragEnd, setDragEnd] = useState<{ row: number; col: number } | null>(null);
   const [hoveredSlot, setHoveredSlot] = useState<string | null>(null);
   const rafRef = useRef<number>();
+  
+  // Track previous state for dirty rectangle rendering
+  const prevStateRef = useRef({
+    hoveredSlot: null as string | null,
+    selectedSlots: new Set<string>(),
+    occupiedSlots: new Set<string>(),
+    isDragging: false,
+    dragStart: null as { row: number; col: number } | null,
+    dragEnd: null as { row: number; col: number } | null
+  });
 
   // Calculate slot dimensions
   const slotWidth = dimensions.width / GRID_SIZE;
@@ -74,15 +84,73 @@ const CanvasVideoGrid: React.FC<CanvasVideoGridProps> = ({
     return null;
   }, [dimensions]);
 
-  // Render canvas
+  // Render canvas with dirty rectangle optimization
   const render = useCallback(() => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d', { alpha: false });
     if (!canvas || !ctx) return;
 
-    // Clear canvas
-    ctx.fillStyle = '#141414';
-    ctx.fillRect(0, 0, dimensions.width, dimensions.height);
+    const prevState = prevStateRef.current;
+    const changedSlots = new Set<string>();
+    
+    // Detect hover changes
+    if (hoveredSlot !== prevState.hoveredSlot) {
+      if (prevState.hoveredSlot) changedSlots.add(prevState.hoveredSlot);
+      if (hoveredSlot) changedSlots.add(hoveredSlot);
+    }
+    
+    // Detect selection changes
+    selectedSlots.forEach(slot => {
+      if (!prevState.selectedSlots.has(slot)) changedSlots.add(slot);
+    });
+    prevState.selectedSlots.forEach(slot => {
+      if (!selectedSlots.has(slot)) changedSlots.add(slot);
+    });
+    
+    // Detect occupied slots changes
+    occupiedSlots.forEach(slot => {
+      if (!prevState.occupiedSlots.has(slot)) changedSlots.add(slot);
+    });
+    prevState.occupiedSlots.forEach(slot => {
+      if (!occupiedSlots.has(slot)) changedSlots.add(slot);
+    });
+    
+    // If dragging state changed, mark all slots in drag areas as changed
+    if (isDragging !== prevState.isDragging || dragStart !== prevState.dragStart || dragEnd !== prevState.dragEnd) {
+      // Mark previous drag area
+      if (prevState.isDragging && prevState.dragStart && prevState.dragEnd) {
+        const minRow = Math.min(prevState.dragStart.row, prevState.dragEnd.row);
+        const maxRow = Math.max(prevState.dragStart.row, prevState.dragEnd.row);
+        const minCol = Math.min(prevState.dragStart.col, prevState.dragEnd.col);
+        const maxCol = Math.max(prevState.dragStart.col, prevState.dragEnd.col);
+        for (let row = minRow; row <= maxRow; row++) {
+          for (let col = minCol; col <= maxCol; col++) {
+            changedSlots.add(getSlotFromCoords(col, row));
+          }
+        }
+      }
+      // Mark current drag area
+      if (isDragging && dragStart && dragEnd) {
+        const minRow = Math.min(dragStart.row, dragEnd.row);
+        const maxRow = Math.max(dragStart.row, dragEnd.row);
+        const minCol = Math.min(dragStart.col, dragEnd.col);
+        const maxCol = Math.max(dragStart.col, dragEnd.col);
+        for (let row = minRow; row <= maxRow; row++) {
+          for (let col = minCol; col <= maxCol; col++) {
+            changedSlots.add(getSlotFromCoords(col, row));
+          }
+        }
+      }
+    }
+    
+    // If too many changes (>200), do full redraw
+    const shouldFullRedraw = changedSlots.size > 200 || changedSlots.size === 0;
+    
+    if (shouldFullRedraw) {
+      // Full redraw
+      ctx.fillStyle = '#141414';
+      ctx.fillRect(0, 0, dimensions.width, dimensions.height);
+    }
 
     // Calculate drag selection rectangle
     let dragSelection: Set<string> | null = null;
@@ -100,16 +168,26 @@ const CanvasVideoGrid: React.FC<CanvasVideoGridProps> = ({
       }
     }
 
-    // Render all slots
+    // Render slots (only changed slots if doing partial redraw)
     for (let row = 0; row < GRID_SIZE; row++) {
       for (let col = 0; col < GRID_SIZE; col++) {
         const slotId = getSlotFromCoords(col, row);
+        
+        // Skip unchanged slots during partial redraw
+        if (!shouldFullRedraw && !changedSlots.has(slotId)) continue;
+        
         const x = col * slotWidth;
         const y = row * slotHeight;
 
         const isOccupied = occupiedSlots.has(slotId);
         const isSelected = selectedSlots.has(slotId) || dragSelection?.has(slotId);
         const isHovered = hoveredSlot === slotId;
+
+        // Clear this slot's area for partial redraws
+        if (!shouldFullRedraw) {
+          ctx.fillStyle = '#141414';
+          ctx.fillRect(x, y, slotWidth, slotHeight);
+        }
 
         // Choose slot color based on state
         if (isSelected) {
@@ -130,6 +208,16 @@ const CanvasVideoGrid: React.FC<CanvasVideoGridProps> = ({
         ctx.strokeRect(x, y, slotWidth, slotHeight);
       }
     }
+    
+    // Update previous state
+    prevStateRef.current = {
+      hoveredSlot,
+      selectedSlots: new Set(selectedSlots),
+      occupiedSlots: new Set(occupiedSlots),
+      isDragging,
+      dragStart,
+      dragEnd
+    };
 
     // Draw drag selection rectangle outline
     if (isDragging && dragStart && dragEnd) {
@@ -279,4 +367,14 @@ const CanvasVideoGrid: React.FC<CanvasVideoGridProps> = ({
   );
 };
 
-export default CanvasVideoGrid;
+// Memoize component to prevent unnecessary re-renders
+export default memo(CanvasVideoGrid, (prevProps, nextProps) => {
+  return (
+    prevProps.videos === nextProps.videos &&
+    prevProps.occupiedSlots === nextProps.occupiedSlots &&
+    prevProps.selectedSlots === nextProps.selectedSlots &&
+    prevProps.onSlotClick === nextProps.onSlotClick &&
+    prevProps.onVideoView === nextProps.onVideoView &&
+    prevProps.onSelectionChange === nextProps.onSelectionChange
+  );
+});

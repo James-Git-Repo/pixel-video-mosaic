@@ -193,6 +193,22 @@ const VideoGridInterface: React.FC<VideoGridInterfaceProps> = ({
         </div>
       </main>
 
+      {/* Mobile Floating Action Button */}
+      {selectionCount > 0 && (
+        <button
+          onClick={handlePurchaseSelected}
+          className="fixed bottom-20 right-4 z-50 sm:hidden flex items-center justify-center gap-2 px-4 py-3 rounded-full cyber-bg neon-border-cyan shadow-lg glow-hover animate-pulse"
+          style={{ 
+            boxShadow: '0 0 20px hsl(var(--neon-cyan) / 0.5), 0 4px 20px rgba(0,0,0,0.3)' 
+          }}
+        >
+          <ShoppingCart className="w-5 h-5 text-foreground" />
+          <span className="font-cyber font-bold text-foreground text-sm">
+            Buy {selectionCount}
+          </span>
+        </button>
+      )}
+
       {/* Footer with Instructions */}
       <footer className="relative z-10 border-t border-primary/30 px-2 sm:px-4 py-1.5 sm:py-2" style={{ 
         background: 'linear-gradient(90deg, hsl(var(--neon-purple) / 0.1) 0%, hsl(var(--neon-pink) / 0.15) 50%, hsl(var(--neon-cyan) / 0.1) 100%)'

@@ -127,40 +127,43 @@ const VideoGridInterface: React.FC<VideoGridInterfaceProps> = ({
       </div>
 
       {/* Header */}
-      <header className="header-gradient px-6 py-4 relative z-10">
-        <div className="flex items-center justify-between gap-4">
+      <header className="header-gradient px-3 sm:px-6 py-2 sm:py-4 relative z-10">
+        <div className="flex items-center justify-between gap-2 sm:gap-4">
           {/* Left Section - Hamburger Menu */}
-          <div className="flex items-center justify-start flex-1">
+          <div className="flex items-center justify-start flex-1 min-w-0">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setIsNavOpen(true)}
-              className="text-foreground hover:bg-primary/30 glow-hover neon-border"
+              className="text-foreground hover:bg-primary/30 glow-hover neon-border w-8 h-8 sm:w-10 sm:h-10"
             >
-              <Menu className="w-6 h-6" />
+              <Menu className="w-5 h-5 sm:w-6 sm:h-6" />
             </Button>
           </div>
 
           {/* Center Section - Title */}
-          <div className="text-center flex-shrink-0">
-            <h1 className="text-4xl font-cyber font-black neon-text">
+          <div className="text-center flex-shrink-0 px-1">
+            <h1 className="text-lg sm:text-2xl md:text-4xl font-cyber font-black neon-text leading-tight">
               AI Billboard Project
             </h1>
-            <p className="text-sm font-cyber text-muted-foreground mt-1">
+            <p className="text-[10px] sm:text-xs md:text-sm font-cyber text-muted-foreground mt-0.5 sm:mt-1">
               Where Art and Advertising come together
             </p>
           </div>
 
           {/* Right Section - Buy Button */}
-          <div className="flex items-center justify-end flex-1">
+          <div className="flex items-center justify-end flex-1 min-w-0">
             <Button
               onClick={handlePurchaseSelected}
               disabled={selectionCount === 0}
-              className="cyber-bg text-foreground font-cyber font-bold px-8 py-4 text-lg glow-hover disabled:opacity-20 disabled:cursor-not-allowed neon-border-cyan relative overflow-hidden group"
+              className="cyber-bg text-foreground font-cyber font-bold px-2 sm:px-4 md:px-8 py-1.5 sm:py-2 md:py-4 text-xs sm:text-sm md:text-lg glow-hover disabled:opacity-20 disabled:cursor-not-allowed neon-border-cyan relative overflow-hidden group"
             >
-              <ShoppingCart className="w-6 h-6 mr-2 relative z-10" />
-              <span className="relative z-10">
+              <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 mr-1 sm:mr-2 relative z-10" />
+              <span className="relative z-10 hidden sm:inline">
                 Buy {selectionCount || ''} Slot{selectionCount !== 1 ? 's' : ''}
+              </span>
+              <span className="relative z-10 sm:hidden">
+                {selectionCount || 'Buy'}
               </span>
             </Button>
           </div>
@@ -191,21 +194,23 @@ const VideoGridInterface: React.FC<VideoGridInterfaceProps> = ({
       </main>
 
       {/* Footer with Instructions */}
-      <footer className="relative z-10 border-t border-primary/30 px-4 py-2" style={{ 
+      <footer className="relative z-10 border-t border-primary/30 px-2 sm:px-4 py-1.5 sm:py-2" style={{ 
         background: 'linear-gradient(90deg, hsl(var(--neon-purple) / 0.1) 0%, hsl(var(--neon-pink) / 0.15) 50%, hsl(var(--neon-cyan) / 0.1) 100%)'
       }}>
-        <div className="text-center space-y-1.5">
-          <p className="text-xs text-foreground/80 font-cyber">
-            Drag to select rectangular areas. Click occupied slots to watch videos. Each slot costs $1.00 USD.
+        <div className="text-center space-y-1 sm:space-y-1.5">
+          <p className="text-[9px] sm:text-xs text-foreground/80 font-cyber leading-tight">
+            <span className="hidden sm:inline">Drag to select rectangular areas. Click occupied slots to watch videos. </span>
+            <span className="sm:hidden">Tap to select slots. </span>
+            Each slot costs $1.00 USD.
           </p>
-          <div className="flex items-center justify-center gap-2">
-            <div className="h-[1px] w-6 bg-gradient-to-r from-transparent via-primary to-transparent"></div>
-            <div className="flex items-center gap-1.5 px-2 py-1 rounded-full neon-border bg-primary/5">
-              <Sparkles className="w-3 h-3 text-primary animate-pulse" />
-              <span className="text-xs font-cyber font-bold sparkle-text">All content must be AI-generated!</span>
-              <Sparkles className="w-3 h-3 text-accent animate-pulse" style={{ animationDelay: '0.5s' }} />
+          <div className="flex items-center justify-center gap-1 sm:gap-2">
+            <div className="hidden sm:block h-[1px] w-6 bg-gradient-to-r from-transparent via-primary to-transparent"></div>
+            <div className="flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full neon-border bg-primary/5">
+              <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-primary animate-pulse" />
+              <span className="text-[9px] sm:text-xs font-cyber font-bold sparkle-text">AI-generated content only!</span>
+              <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-accent animate-pulse" style={{ animationDelay: '0.5s' }} />
             </div>
-            <div className="h-[1px] w-6 bg-gradient-to-r from-transparent via-accent to-transparent"></div>
+            <div className="hidden sm:block h-[1px] w-6 bg-gradient-to-r from-transparent via-accent to-transparent"></div>
           </div>
         </div>
       </footer>

@@ -15,6 +15,62 @@ const CreateCheckoutSchema = z.object({
   linked_url: z.string().url().max(2048).optional().or(z.literal('')),
 });
 
+// Extract client IP from request headers
+function getClientIp(req: Request): string {
+  const forwarded = req.headers.get('x-forwarded-for');
+  if (forwarded) {
+    return forwarded.split(',')[0].trim();
+  }
+  const realIp = req.headers.get('x-real-ip');
+  return realIp || 'unknown';
+}
+
+// Rate limiting: max 5 checkouts per IP per hour
+async function checkRateLimit(
+  supabase: any,
+  ip: string,
+  endpoint: string,
+  maxRequests: number = 5
+): Promise<{ allowed: boolean; reason?: string }> {
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+
+  const { count, error } = await supabase
+    .from('rate_limit_requests')
+    .select('*', { count: 'exact', head: true })
+    .eq('ip_address', ip)
+    .eq('endpoint', endpoint)
+    .gte('created_at', oneHourAgo);
+
+  if (error) {
+    console.error('Rate limit check failed:', error);
+    return { allowed: true };
+  }
+
+  if (count && count >= maxRequests) {
+    return { allowed: false, reason: 'Rate limit exceeded' };
+  }
+
+  return { allowed: true };
+}
+
+// Log request for rate limiting
+async function logRequest(
+  supabase: any,
+  ip: string,
+  endpoint: string,
+  email?: string
+): Promise<void> {
+  await supabase.from('rate_limit_requests').insert({
+    ip_address: ip,
+    endpoint: endpoint,
+    email: email || null,
+  });
+
+  if (Math.random() < 0.01) {
+    await supabase.rpc('cleanup_old_rate_limit_requests');
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -28,6 +84,21 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
+    // Get client IP for rate limiting
+    const clientIp = getClientIp(req);
+
+    // Check rate limit (max 5 checkouts per IP per hour)
+    const rateLimitCheck = await checkRateLimit(supabaseClient, clientIp, 'create-checkout', 5);
+    if (!rateLimitCheck.allowed) {
+      console.log(`Rate limit exceeded for IP: ${clientIp}`);
+      return new Response(JSON.stringify({ 
+        error: "Too many requests. Please try again later." 
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 429,
+      });
+    }
+
     const body = await req.json();
     
     // Validate input using Zod schema
@@ -40,6 +111,9 @@ serve(async (req) => {
     }
 
     const { hold_id, email, linked_url } = validation.data;
+
+    // Log this request for rate limiting
+    await logRequest(supabaseClient, clientIp, 'create-checkout', email);
 
     if (!hold_id) {
       return new Response(JSON.stringify({ error: "Missing hold_id" }), {
@@ -95,9 +169,9 @@ serve(async (req) => {
 
     // Validate that it's a secret key, not a publishable key
     if (!stripeKey.startsWith('sk_')) {
-      console.error('Invalid Stripe secret key configured. Expected key starting with "sk_", got key starting with:', stripeKey.substring(0, 3));
+      console.error('Invalid Stripe secret key configured');
       return new Response(
-        JSON.stringify({ error: "Stripe secret key is not valid on the server" }),
+        JSON.stringify({ error: "Stripe configuration error" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
       );
     }
@@ -151,7 +225,6 @@ serve(async (req) => {
 
     if (updateError) {
       console.error('Failed to update hold with session ID');
-      // Continue anyway, as the session was created successfully
     }
 
     return new Response(JSON.stringify({ url: session.url }), {
@@ -160,17 +233,9 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('Checkout creation failed:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    const errorDetails = error instanceof Error && 'type' in error ? JSON.stringify(error) : errorMessage;
-    console.error('Error details:', errorDetails);
-    
+    console.error('Checkout creation failed');
     return new Response(
-      JSON.stringify({ 
-        error: "Failed to create checkout session", 
-        details: errorMessage,
-        hint: "Check the edge function logs for more information"
-      }), {
+      JSON.stringify({ error: "Failed to create checkout session" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 500,
       }

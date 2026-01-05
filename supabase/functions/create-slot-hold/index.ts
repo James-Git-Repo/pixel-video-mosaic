@@ -15,6 +15,64 @@ const SlotHoldSchema = z.object({
   slot_ids: z.array(z.string().max(10)).optional(),
 });
 
+// Extract client IP from request headers
+function getClientIp(req: Request): string {
+  const forwarded = req.headers.get('x-forwarded-for');
+  if (forwarded) {
+    return forwarded.split(',')[0].trim();
+  }
+  const realIp = req.headers.get('x-real-ip');
+  return realIp || 'unknown';
+}
+
+// Rate limiting: max 10 holds per IP per hour
+async function checkRateLimit(
+  supabase: any,
+  ip: string,
+  endpoint: string,
+  maxRequests: number = 10
+): Promise<{ allowed: boolean; reason?: string }> {
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+
+  const { count, error } = await supabase
+    .from('rate_limit_requests')
+    .select('*', { count: 'exact', head: true })
+    .eq('ip_address', ip)
+    .eq('endpoint', endpoint)
+    .gte('created_at', oneHourAgo);
+
+  if (error) {
+    console.error('Rate limit check failed:', error);
+    // Allow request on error to avoid blocking legitimate users
+    return { allowed: true };
+  }
+
+  if (count && count >= maxRequests) {
+    return { allowed: false, reason: 'Rate limit exceeded' };
+  }
+
+  return { allowed: true };
+}
+
+// Log request for rate limiting
+async function logRequest(
+  supabase: any,
+  ip: string,
+  endpoint: string,
+  email?: string
+): Promise<void> {
+  await supabase.from('rate_limit_requests').insert({
+    ip_address: ip,
+    endpoint: endpoint,
+    email: email || null,
+  });
+
+  // Cleanup old records occasionally (1% chance per request)
+  if (Math.random() < 0.01) {
+    await supabase.rpc('cleanup_old_rate_limit_requests');
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -28,6 +86,21 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
+    // Get client IP for rate limiting
+    const clientIp = getClientIp(req);
+
+    // Check rate limit before processing (max 10 holds per IP per hour)
+    const rateLimitCheck = await checkRateLimit(supabaseClient, clientIp, 'create-slot-hold', 10);
+    if (!rateLimitCheck.allowed) {
+      console.log(`Rate limit exceeded for IP: ${clientIp}`);
+      return new Response(JSON.stringify({ 
+        error: "Too many requests. Please try again later." 
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 429,
+      });
+    }
+
     const body = await req.json();
     
     // Validate input using Zod schema
@@ -40,6 +113,9 @@ serve(async (req) => {
     }
 
     const { email, top_left, bottom_right, slot_ids } = validation.data;
+
+    // Log this request for rate limiting
+    await logRequest(supabaseClient, clientIp, 'create-slot-hold', email);
 
     // Generate deterministic anonymous user ID from email
     const encoder = new TextEncoder();
@@ -100,7 +176,7 @@ serve(async (req) => {
       .eq('email', email);
 
     if (cleanupError) {
-      console.error('Failed to cleanup existing holds for email:', email, cleanupError);
+      console.error('Failed to cleanup existing holds for email');
     }
 
     // Use the atomic function for slot reservation with email included

@@ -42,7 +42,7 @@ const Terms: React.FC = () => {
                 2. Payment & Pricing
               </h2>
               <ul className="space-y-2">
-                <li>• Each slot costs $0.50 USD</li>
+                <li>• Each slot costs $1.00 USD</li>
                 <li>• Payments are processed securely through Stripe</li>
                 <li>• All prices are in USD unless otherwise specified</li>
                 <li>• Payment is required before content upload</li>

@@ -102,7 +102,7 @@ const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
                 <span>Buy {selectedSlots.size} Slot{selectedSlots.size !== 1 ? 's' : ''}</span>
                 {selectedSlots.size > 0 && (
                   <span className="text-sm font-futura opacity-90">
-                    ${(selectedSlots.size * 0.50).toFixed(2)} USD
+                    ${(selectedSlots.size * 1.00).toFixed(2)} USD
                   </span>
                 )}
               </div>
@@ -113,7 +113,7 @@ const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
                   💡 Select rectangular areas on the grid to purchase video slots
                 </p>
                 <p className="text-xs text-sidebar-accent text-center font-futura mt-1">
-                  $0.50 per slot • AI content only
+                  $1.00 per slot • AI content only
                 </p>
               </div>
             )}

@@ -42,7 +42,7 @@ const PaymentCancelledPage: React.FC = () => {
           
           <div className="text-xs text-muted-foreground">
             <p>
-              You can try selecting slots again. Remember: each slot costs $0.50 USD.
+              You can try selecting slots again. Remember: each slot costs $1.00 USD.
             </p>
           </div>
         </CardContent>

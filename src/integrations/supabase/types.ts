@@ -168,6 +168,30 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limit_requests: {
+        Row: {
+          created_at: string
+          email: string | null
+          endpoint: string
+          id: string
+          ip_address: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          endpoint: string
+          id?: string
+          ip_address: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          endpoint?: string
+          id?: string
+          ip_address?: string
+        }
+        Relationships: []
+      }
       slot_hold_items: {
         Row: {
           created_at: string | null
@@ -344,6 +368,7 @@ export type Database = {
     }
     Functions: {
       cleanup_old_promo_attempts: { Args: never; Returns: undefined }
+      cleanup_old_rate_limit_requests: { Args: never; Returns: undefined }
       create_slot_hold_atomic:
         | {
             Args: {
